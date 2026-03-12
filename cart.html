@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Feynman Coffee - Cart</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin:0; font-family:'Segoe UI', Tahoma, sans-serif; background:#f7f3ef; color:#3b2f2f; }
+    header { background:#2b1d1d; color:#fff; padding:20px 40px; display:flex; justify-content:space-between; align-items:center; }
+    header h1 { margin:0; font-size:28px; }
+    nav a { color:#fff; margin-left:20px; text-decoration:none; font-weight:500; }
+    nav a:hover { color:#6f4e37; }
+    section { padding:60px 40px; max-width:1100px; margin:auto; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { padding:12px 8px; border:1px solid #ccc; text-align:left; }
+    th { background:#e2dcd6; }
+    .actions button, .clearBtn {
+      background:#6f4e37;
+      color:#fff;
+      border:none;
+      padding:6px 12px;
+      border-radius:4px;
+      cursor:pointer;
+    }
+    .actions button:hover, .clearBtn:hover { background:#573a2e; }
+    .empty { text-align:center; margin-top:80px; font-size:1.2em; }
+    .totals { text-align:right; margin-top:20px; font-weight:700; }
+  </style>
+</head>
+<body>
+  <header>
+     <div class="header-container">
+    <img src="images/Media-removebg-preview.png" alt="Feynman Coffee Logo" width="40" height="40"> 
+    <h1 class="">Feynman Coffee</h1>
+  
+  </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="menu.html">Menu</a>
+      <a href="cart.html">Cart</a>
+      <a href="index.html#contact">Contact</a>
+    </nav>
+  </header>
+ 
+  <section id="cart">
+    <h2>Your Cart</h2>
+    <div id="cartContainer"></div>
+  </section>
+ 
+<script>
+  function renderCart() {
+    const container = document.getElementById('cartContainer');
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+const savedPayment = localStorage.getItem('selectedPayment') || "";
+ 
+    if(cart.length === 0) {
+      container.innerHTML = '<p class="empty">Your cart is empty.</p>';
+      return;
+    }
+ 
+    let html = '<table><thead><tr><th>Item</th><th>Unit Price</th><th>Qty</th><th>Total</th><th>Actions</th></tr></thead><tbody>';
+    let grandTotal = 0;
+ 
+    cart.forEach((it, idx) => {
+      const total = (it.unitPrice * it.qty).toFixed(2);
+      grandTotal += parseFloat(total);
+ 
+      html += `
+        <tr data-index="${idx}">
+          <td>${it.title}</td>
+          <td>PHP ${it.unitPrice.toFixed(2)}</td>
+          <td>${it.qty}</td>
+          <td>PHP ${total}</td>
+          <td class="actions">
+            <button class="removeBtn">Remove</button>
+          </td>
+        </tr>`;
+    });
+ 
+    html += '</tbody></table>';
+ 
+    html += `
+  <p class="totals">Grand total: PHP ${grandTotal.toFixed(2)}</p>
+ 
+  <h3>Select Payment Method</h3>
+  <select id="paymentMethod">
+    <option value="">-- Choose Payment --</option>
+    <option value="Cash">Cash</option>
+    <option value="GCash">GCash</option>
+    <option value="Credit Card">Credit Card</option>
+  </select>
+ 
+  <br>
+  <button id="checkoutBtn" class="clearBtn" style="margin-top:10px;">
+    Checkout
+  </button>
+ 
+  <button id="clearCart" class="clearBtn" style="margin-top:12px;">
+    Clear Cart
+  </button>
+ 
+  <div id="receipt" style="margin-top:30px;"></div>
+`;
+ 
+ 
+    container.innerHTML = html;
+ 
+    // Restore saved payment method
+const paymentSelect = document.getElementById('paymentMethod');
+ 
+if (savedPayment) {
+  paymentSelect.value = savedPayment;
+}
+ 
+// Save selection when changed
+paymentSelect.addEventListener('change', function () {
+  localStorage.setItem('selectedPayment', this.value);
+});
+ 
+    // Remove item
+    container.querySelectorAll('.removeBtn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const row = this.closest('tr');
+        const i = parseInt(row.getAttribute('data-index'));
+        cart.splice(i,1);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        renderCart();
+      });
+    });
+ 
+    // Clear cart
+    document.getElementById('clearCart').addEventListener('click', function() {
+      localStorage.removeItem('cart');
+      localStorage.removeItem('selectedPayment');
+      renderCart();
+    });
+ 
+    // Checkout
+    document.getElementById('checkoutBtn').addEventListener('click', function() {
+ 
+      const payment = document.getElementById('paymentMethod').value;
+ 
+      if(payment === "") {
+        alert("Please select a payment method.");
+        return;
+      }
+ 
+      generateReceipt(cart, grandTotal, payment);
+ 
+      localStorage.removeItem('cart');
+localStorage.removeItem('selectedPayment');
+ 
+      localStorage.removeItem('cart');
+    });
+  }
+ 
+  function generateReceipt(cart, total, payment) {
+    const receiptDiv = document.getElementById('receipt');
+ 
+    const date = new Date().toLocaleString();
+    let receiptHTML = `
+      <div style="border:1px solid #ccc; padding:20px; background:#fff;">
+        <h2>🧾 Receipt</h2>
+        <p><strong>Date:</strong> ${date}</p>
+        <p><strong>Payment Method:</strong> ${payment}</p>
+        <hr>
+    `;
+ 
+    cart.forEach(item => {
+      receiptHTML += `
+        <p>${item.title} x ${item.qty}
+        - PHP ${(item.unitPrice * item.qty).toFixed(2)}</p>
+      `;
+    });
+ 
+    receiptHTML += `
+        <hr>
+        <h3>Total Paid: PHP ${total.toFixed(2)}</h3>
+        <p>Thank you for your purchase at Feynman Coffee!</p>
+      </div>
+    `;
+ 
+    receiptDiv.innerHTML = receiptHTML;
+  }
+ 
+  renderCart();
+</script>
+</body>
+</html>

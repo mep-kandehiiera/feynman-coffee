@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Feynman Coffee - Menu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ 
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+ 
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background-color: #f7f3ef;
+      color: #3b2f2f;
+      position: relative;
+      min-height: 100vh;
+      padding-bottom: 80px; /* space reserved for footer */
+    }
+ 
+    header {
+      background: #2b1d1d;
+      color: #fff;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+ 
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+ 
+    nav a {
+      color: #fff;
+      margin-left: 20px;
+      text-decoration: none;
+      font-weight: 500;
+    }
+ 
+    nav a:hover {
+      color: #6f4e37;
+    }
+ 
+    section {
+      padding: 60px 40px;
+      max-width: 1100px;
+      margin: auto;
+    }
+ 
+    section h2 {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+ 
+    .menu-container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+ 
+    .sidebar {
+      flex: 0 0 200px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+ 
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+ 
+    .sidebar li {
+      padding: 10px 15px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-bottom: 5px;
+      transition: background 0.3s, color 0.3s;
+    }
+ 
+    .sidebar li.active,
+    .sidebar li:hover {
+      background: #6f4e37;
+      color: #fff;
+    }
+ 
+    .menu-content {
+      flex: 1;
+      padding: 20px;
+    }
+ 
+    .category {
+      display: none;
+    }
+ 
+    .category.active {
+      display: block;
+    }
+ 
+    .menu-item {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+ 
+    /* Hover lift effect for menu items */
+    .menu-item {
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+ 
+    .menu-item:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+      cursor: pointer;
+    }
+ 
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+ 
+    .modal-overlay.show {
+      display: flex;
+    }
+ 
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+ 
+    .modal .modal-image {
+      background: #f0f0f0 center/cover no-repeat;
+      min-height: 220px;
+    }
+ 
+    .modal .modal-body {
+      padding: 22px;
+    }
+ 
+    .modal .modal-body h3 {
+      margin-top: 0;
+    }
+ 
+    .modal .close-btn {
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #6f4e37;
+      padding: 6px 8px;
+    }
+ 
+    /* quantity input styling */
+    #modalQty {
+      padding: 4px 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+ 
+    #modalOrderBtn {
+      background: #6f4e37;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+      margin-top: 8px;
+    }
+    #modalOrderBtn:hover {
+      background: #573a2e;
+    }
+ 
+    .menu-item h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+ 
+    footer {
+      background: #2b1d1d;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+    }
+ 
+    @media (max-width: 900px) {
+      header {
+        flex-direction: column;
+        text-align: center;
+      }
+     
+      nav {
+        margin-top: 10px;
+      }
+     
+      nav a {
+        margin: 0 10px;
+      }
+    }
+ 
+    @media (max-width: 600px) {
+      header {
+        padding: 15px 20px;
+      }
+     
+      header h1 {
+        font-size: 22px;
+      }
+     
+      nav a {
+        display: block;
+        margin: 10px 0;
+      }
+     
+      section {
+        padding: 40px 20px;
+      }
+     
+      .menu-container {
+        flex-direction: column;
+      }
+     
+      .sidebar {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+    }
+  </style>
+</head>
+ 
+<body>
+ 
+  <header>
+     <div class="header-container">
+    <img src="images/Media-removebg-preview.png" alt="Feynman Coffee Logo" width="40" height="40"> 
+    <h1 class="">Feynman Coffee</h1>
+  
+  </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="menu.html">Menu</a>
+      <a href="cart.html">Cart</a>
+      <a href="index.html#contact">Contact</a>
+    </nav>
+  </header>
+ 
+  <section id="menu">
+    <h2>Our Menu</h2>
+    <div class="menu-container">
+      <aside class="sidebar">
+        <ul>
+          <li class="active" onclick="showCategory('food', this)">Food</li>
+          <li onclick="showCategory('desserts', this)">Desserts</li>
+          <li onclick="showCategory('coffee', this)">Coffee</li>
+          <li onclick="showCategory('specialty', this)">Specialty Drinks</li>
+          <li onclick="showCategory('other', this)">Other Drinks</li>
+        </ul>
+      </aside>
+      <div class="menu-content">
+        <div id="food" class="category active">
+
+<div class="menu-item" data-image="menu/Fresh-Tomato-Basil-Pasta.png">
+<h4>Fresh Tomato & Basil Pasta</h4>
+<p>Cherry tomatoes, basil, chili flakes & garlic served with garlic bread</p>
+<strong>PHP 290</strong>
+</div>
+
+<div class="menu-item" data-image="menu/Spanish-Sardines-Pasta.png">
+<h4>Spanish Sardines Pasta</h4>
+<p>Spanish sardines, tomatoes, garlic & herbs served with garlic bread</p>
+<strong>PHP 330</strong>
+</div>
+
+<div class="menu-item" data-image="menu/Smashed-Burger.png">
+<h4>Smashed Burger</h4>
+<p>Australian beef patty (double beef), brioche & cheese served with homemade french fries</p>
+<strong>PHP 275</strong>
+</div>
+
+<div class="menu-item" data-image="menu/Ham-Cheese-Panini-Sandwich.jpg">
+<h4>Ham & Cheese Panini Sandwich</h4>
+<p>Traditional ham, brioche, cheese, chips on the side</p>
+<strong>PHP 320</strong>
+</div>
+
+<div class="menu-item" data-image="menu/Chicken-Pesto-Panini-Sandwich.jpg">
+<h4>Chicken Pesto Panini Sandwich</h4>
+<p>Pan-seared chicken, pesto, sourdough, tomatoes, basil, cheese</p>
+<strong>PHP 285</strong>
+</div>
+
+<div class="menu-item" data-image="menu/Toasts-Cheese-Pimiento.jpg">
+<h4>Toasts & Cheese Pimiento</h4>
+<p>Homemade cheese pimiento & toasted sourdough</p>
+<strong>PHP 185</strong>
+</div>
+
+<div class="menu-item" data-image="menu/Banana-Nutella.jpg">
+<h4>Banana Nutella</h4>
+<p>Nutella, sourdough, banana served with banana chips</p>
+<strong>PHP 165</strong>
+</div>
+
+</div>
+<div id="desserts" class="category">
+  <div class="menu-item" data-image="menu/Vanilla-Mille-Crepe.jpg">
+    <h4>Vanilla Mille Crepe</h4>
+    <strong>PHP 170</strong>
+  </div>          
+  <div class="menu-item" data-image="menu/Brownies.jpg">
+    <h4>Brownies</h4>
+    <strong>PHP 95</strong>
+  </div>
+  <div class="menu-item" data-image="menu/Chocolate-Chip-Cookie.jpg">
+    <h4>Chocolate Chip Cookie</h4>
+    <strong>PHP 80</strong>
+  </div>
+  <div class="menu-item" data-image="menu/Oatmeal-Cookie.jpg">
+    <h4>Oatmeal Cookie</h4>
+    <strong>PHP 120</strong>
+  </div>
+  <div class="menu-item" data-image="menu/Champorado.jpg">
+    <h4>Champorado</h4>
+    <strong>PHP 150</strong>
+  </div>          
+</div>
+        <div id="coffee" class="category">
+          <div class="menu-item" data-image="menu/Espresso.jpg">
+            <h4>Espresso</h4>
+            <strong>PHP 90</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Flat-White.jpg">
+            <h4>Flat White</h4>
+            <strong>PHP 125</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Americano.jpg">
+            <h4>Americano</h4>
+            <p>Hot: PHP 100 | Iced: PHP 110</p>
+            <strong>PHP 100-110</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Cappuccino.jpg">
+            <h4>Cappuccino</h4>
+            <p>Hot: PHP 130 | Iced: PHP 140</p>
+            <strong>PHP 130-140</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Cafe-Latte.jpg">
+            <h4>Cafe Latte</h4>
+            <p>Hot: PHP 130 | Iced: PHP 140</p>
+            <strong>PHP 130-140</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Cafe-Mocha.jpg">
+            <h4>Cafe Mocha</h4>
+            <p>Hot: PHP 175 | Iced: PHP 185</p>
+            <strong>PHP 175-185</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Caramel-Macchiato.jpg">
+            <h4>Caramel Macchiato</h4>
+            <p>Hot: PHP 150 | Iced: PHP 160</p>
+            <strong>PHP 150-160</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Spanish-Latte.jpg">
+            <h4>Spanish Latte</h4>
+            <p>Hot: PHP 150 | Iced: PHP 160</p>
+            <strong>PHP 150-160</strong>
+          </div>
+        </div>
+        <div id="specialty" class="category">
+          <div class="menu-item" data-image="menu/Espresso-and-Tonic.jpg">
+            <h4>Espresso & Tonic</h4>
+            <p>Iced Only</p>
+            <strong>PHP 160</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Dirty-Horchata.jpg">
+            <h4>Dirty Horchata</h4>
+            <p>Iced Only</p>
+            <strong>PHP 270</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Iced-Cranberry-Latte.jpg">
+            <h4>Iced Cranberry Latte</h4>
+            <p>Iced Only</p>
+            <strong>PHP 185</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Iced-Dirty-Matcha.jpg">
+            <h4>Iced Dirty Matcha</h4>
+            <p>Iced Only</p>
+            <strong>PHP 185</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Kiwi-Espresso.jpg">
+            <h4>Kiwi Espresso</h4>
+            <p>Iced Only</p>
+            <strong>PHP 170</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Caramel-Frappe.jpg">
+            <h4>Caramel Frappe</h4>
+            <p>Blended</p>
+            <strong>PHP 190</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Mocha-Frappe.jpg">
+            <h4>Mocha Frappe</h4>
+            <p>Blended</p>
+            <strong>PHP 185</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Cookies-and-Cream.jpg">
+            <h4>Cookies & Cream</h4>
+            <p>Blended (non-coffee)</p>
+            <strong>PHP 195</strong>
+          </div>
+        </div>
+        <div id="other" class="category">
+          <div class="menu-item" data-image="menu/Chocolate.jpg">
+            <h4>Chocolate</h4>
+            <p>Hot: PHP 170 | Iced: PHP 180</p>
+            <strong>PHP 170-180</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Horchata.jpg">
+            <h4>Horchata</h4>
+            <p>Hot: PHP 180 | Iced: PHP 190</p>
+            <strong>PHP 180-190</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Matcha.jpg">
+            <h4>Matcha</h4>
+            <p>Hot: PHP 150 | Iced: PHP 160</p>
+            <strong>PHP 150-160</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Crimson-Joy.jpg">
+            <h4>Crimson Joy</h4>
+            <p>Tea-based with citrus</p>
+            <strong>PHP 130</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Kiwi-Lemonade.jpg">
+            <h4>Kiwi Lemonade</h4>
+            <strong>PHP 185</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Banana-Yogurt-Smoothie.jpg">
+            <h4>Banana Yogurt Smoothie</h4>
+            <strong>PHP 145</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Mango-Yogurt-Smoothie.jpg">
+            <h4>Mango Yogurt Smoothie</h4>
+            <strong>PHP 155</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Sahlee's-Smoothie.jpg">
+            <h4>Sahlee's Smoothie</h4>
+            <p>Mango & Banana</p>
+            <strong>PHP 160</strong>
+          </div>
+          <div class="menu-item" data-image="menu/Hot-Teas.jpg">
+            <h4>Hot Teas (Tsaa Laya)</h4>
+            <p>Tanglad, Pandan, Tropical Summer, Arvensis Mint, Bughaw</p>
+            <strong>PHP 150</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <footer>
+    <p>© 2026 Feynman Coffee</p>
+  </footer>
+ 
+  <!-- Modal / Overlay for menu item details -->
+  <div id="modalOverlay" class="modal-overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-image" id="modalImage" style="background-image: url('');"></div>
+      <div class="modal-body">
+        <button class="close-btn" id="modalClose" aria-label="Close">✕</button>
+        <h3 id="modalTitle"></h3>
+        <p id="modalDescription"></p>
+        <p id="modalPrice" style="font-weight:700;margin-top:12px"></p>
+        <p style="margin-top:12px;">
+          Quantity: <input type="number" id="modalQty" min="1" value="1" style="width:60px;" />
+        </p>
+        <p>Total: <span id="modalTotal"></span></p>
+        <button id="modalOrderBtn" style="background:#6f4e37;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;margin-top:8px;">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+ 
+  <script>
+    function showCategory(cat, elem) {
+      document.querySelectorAll('.sidebar li').forEach(li => li.classList.remove('active'));
+      elem.classList.add('active');
+      document.querySelectorAll('.category').forEach(div => div.classList.remove('active'));
+      document.getElementById(cat).classList.add('active');
+    }
+ 
+    // Modal handling for menu items
+    (function() {
+      const overlay = document.getElementById('modalOverlay');
+      const modalImage = document.getElementById('modalImage');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalDescription = document.getElementById('modalDescription');
+      const modalPrice = document.getElementById('modalPrice');
+      const modalClose = document.getElementById('modalClose');
+ 
+      function openModal(data) {
+        modalTitle.textContent = data.title || '';
+        modalDescription.textContent = data.description || '';
+        modalPrice.textContent = data.price || '';
+        // parse numeric price for calculation
+        currentPrice = parsePrice(data.price || '');
+        // reset quantity and total
+        const qtyInput = document.getElementById('modalQty');
+        qtyInput.value = 1;
+        updateTotal();
+        // attach listeners if not already done (idempotent)
+        qtyInput.oninput = updateTotal;
+        document.getElementById('modalOrderBtn').onclick = handleOrder;
+        if (data.image) {
+          modalImage.style.backgroundImage = `url('${data.image}')`;
+        } else {
+          modalImage.style.backgroundImage = '';
+        }
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden', 'false');
+      }
+ 
+      let currentPrice = 0; // numeric base price used for total calculation
+ 
+      function closeModal() {
+        overlay.classList.remove('show');
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+ 
+      function parsePrice(str) {
+        // grab first number in string (handles ranges by taking first value)
+        const match = str.replace(/,/g, '').match(/\d+(?:\.\d+)?/);
+        return match ? parseFloat(match[0]) : 0;
+      }
+ 
+      function updateTotal() {
+        const qty = Number(document.getElementById('modalQty').value) || 1;
+        const total = (currentPrice * qty).toFixed(2);
+        document.getElementById('modalTotal').textContent = 'PHP ' + total;
+      }
+ 
+      // handle order button click
+  function handleOrder() {
+  const qty = Number(document.getElementById('modalQty').value) || 1;
+  const item = modalTitle.textContent;
+  const unitPrice = currentPrice;
+ 
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  cart.push({title: item, qty, unitPrice, total: unitPrice * qty});
+  localStorage.setItem('cart', JSON.stringify(cart));
+ 
+  closeModal(); // just close modal, no alert
+}
+ 
+      // Wire up clicks on menu items
+      document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const titleEl = item.querySelector('h4');
+          const descEl = item.querySelector('p');
+          const priceEl = item.querySelector('strong');
+          // If you want images per item, add a data-image attribute to the .menu-item element
+          const image = item.getAttribute('data-image') || '';
+          openModal({
+            title: titleEl ? titleEl.textContent : '',
+            description: descEl ? descEl.textContent : '',
+            price: priceEl ? priceEl.textContent : '',
+            image
+          });
+        });
+      });
+ 
+      // Close handlers
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay || e.target === modalClose) closeModal();
+      });
+ 
+      modalClose.addEventListener('click', closeModal);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+    })();
+  </script>
+ 
+</body>
+</html>
+ 
