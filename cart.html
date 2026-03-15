@@ -61,7 +61,7 @@ th{
 background:#e2dcd6;
 }
 
-.actions button,.clearBtn{
+button{
 background:#6f4e37;
 color:#fff;
 border:none;
@@ -70,7 +70,7 @@ border-radius:4px;
 cursor:pointer;
 }
 
-.actions button:hover,.clearBtn:hover{
+button:hover{
 background:#573a2e;
 }
 
@@ -149,7 +149,6 @@ html+=`
 <td><button onclick="removeItem(${index})">Remove</button></td>
 </tr>
 `
-
 })
 
 html+="</table>"
@@ -162,6 +161,9 @@ html+=`
 
 <label>Full Name</label>
 <input type="text" id="customerName">
+
+<label>Email (Gmail Only)</label>
+<input type="email" id="customerEmail">
 
 <label>Address</label>
 <input type="text" id="customerAddress">
@@ -178,50 +180,69 @@ html+=`
 <option value="Credit Card">Credit Card</option>
 </select>
 
-<button class="clearBtn" onclick="checkout(${grandTotal})">Checkout</button>
-<button class="clearBtn" onclick="clearCart()">Clear Cart</button>
+<button onclick="checkout(${grandTotal})">Checkout</button>
+<button onclick="clearCart()">Clear Cart</button>
 
 <div id="receipt" style="margin-top:30px;"></div>
 
 `
 
 container.innerHTML=html
-
 }
 
 function removeItem(i){
-
 const cart=JSON.parse(localStorage.getItem("cart")||"[]")
 cart.splice(i,1)
 localStorage.setItem("cart",JSON.stringify(cart))
 renderCart()
-
 }
 
 function clearCart(){
-
 localStorage.removeItem("cart")
 renderCart()
-
 }
 
 function checkout(total){
 
 const cart=JSON.parse(localStorage.getItem("cart")||"[]")
 
-const name=document.getElementById("customerName").value
-const address=document.getElementById("customerAddress").value
-const contact=document.getElementById("customerContact").value
-const payment=document.getElementById("paymentMethod").value
-
-if(name==""||address==""||contact==""){
-alert("Please fill in your information")
+if(cart.length===0){
+alert("Your cart is empty")
 return
 }
 
+const name=document.getElementById("customerName").value.trim()
+const email=document.getElementById("customerEmail").value.trim()
+const address=document.getElementById("customerAddress").value.trim()
+const contact=document.getElementById("customerContact").value.trim()
+const payment=document.getElementById("paymentMethod").value
+
+const namePattern=/^[A-Za-z\s]+$/
+const emailPattern=/^[a-zA-Z0-9._%+-]+@gmail\.com$/
 const phonePattern=/^09\d{9}$/
+
+if(name==""||email==""||address==""||contact==""){
+alert("Please fill in all fields")
+return
+}
+
+if(!namePattern.test(name)){
+alert("Enter valid name (letters only)")
+return
+}
+
+if(!emailPattern.test(email)){
+alert("Enter valid Gmail address")
+return
+}
+
+if(address.length<5){
+alert("Enter valid address")
+return
+}
+
 if(!phonePattern.test(contact)){
-alert("Enter valid PH phone number (09123456789)")
+alert("Enter valid PH number (09123456789)")
 return
 }
 
@@ -234,25 +255,23 @@ const orderNumber="FC-"+Date.now()
 const verificationCode=Math.floor(1000+Math.random()*9000)
 
 const confirmOrder=confirm(
-"Confirm order?\n\n"+
+"Confirm Order?\n\n"+
 "Order #: "+orderNumber+"\n"+
 "Name: "+name+"\n"+
+"Email: "+email+"\n"+
 "Address: "+address+"\n"+
 "Contact: "+contact+"\n"+
 "Payment: "+payment
 )
 
-if(!confirmOrder){
-return
-}
+if(!confirmOrder) return
 
-generateReceipt(cart,total,name,address,contact,payment,orderNumber,verificationCode)
+generateReceipt(cart,total,name,email,address,contact,payment,orderNumber,verificationCode)
 
 localStorage.removeItem("cart")
-
 }
 
-function generateReceipt(cart,total,name,address,contact,payment,orderNumber,verificationCode){
+function generateReceipt(cart,total,name,email,address,contact,payment,orderNumber,verificationCode){
 
 const receipt=document.getElementById("receipt")
 
@@ -264,6 +283,7 @@ let html=`
 <p><b>Verification Code:</b> ${verificationCode}</p>
 
 <p><b>Name:</b> ${name}</p>
+<p><b>Email:</b> ${email}</p>
 <p><b>Address:</b> ${address}</p>
 <p><b>Contact:</b> ${contact}</p>
 <p><b>Payment:</b> ${payment}</p>
@@ -281,12 +301,11 @@ html+=`
 html+=`
 <hr>
 <h3>Total Paid: PHP ${total.toFixed(2)}</h3>
-<p>Thank you for ordering from Feynman Coffee! ☕</p>
+<p>Thank you for ordering from Feynman Coffee ☕</p>
 </div>
 `
 
 receipt.innerHTML=html
-
 }
 
 renderCart()
