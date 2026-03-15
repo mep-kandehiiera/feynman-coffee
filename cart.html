@@ -87,7 +87,6 @@ margin-top:20px;
 <header>
 <h1>Feynman Coffee</h1>
 
-<!-- ✅ ADDED SIGNUP & LOGIN ONLY -->
 <nav>
 <a href="index.html">Home</a>
 <a href="menu.html">Menu</a>
@@ -99,7 +98,11 @@ margin-top:20px;
 </header>
 
 <section>
-    <h3>Account</h3>
+
+<h2>Your Cart</h2>
+
+<!-- ACCOUNT SECTION -->
+<h3>Account</h3>
 
 <label>Email</label>
 <input type="email" id="email">
@@ -109,29 +112,77 @@ margin-top:20px;
 
 <button onclick="signup()">Sign Up</button>
 <button onclick="login()">Login</button>
-<h2>Your Cart</h2>
+
 <div id="cartContainer"></div>
+
 </section>
 
-<script>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+getAuth,
+createUserWithEmailAndPassword,
+signInWithEmailAndPassword,
+sendEmailVerification,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
+authDomain: "feynmancoffee.firebaseapp.com",
+projectId: "feynmancoffee",
+storageBucket: "feynmancoffee.firebasestorage.app",
+messagingSenderId: "675690093755",
+appId: "1:675690093755:web:35cd674627b98bd651dd9e",
+measurementId: "G-4JLJ9G30VV"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.signup = async function(){
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+
+try{
+const user=await createUserWithEmailAndPassword(auth,email,password);
+await sendEmailVerification(user.user);
+alert("Verification link sent to Gmail!");
+}catch(error){
+alert(error.message);
+}
+};
+
+window.login = async function(){
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+
+try{
+await signInWithEmailAndPassword(auth,email,password);
+alert("Logged in!");
+}catch(error){
+alert(error.message);
+}
+};
 
 function renderCart(){
 
-const container=document.getElementById("cartContainer")
-const cart=JSON.parse(localStorage.getItem("cart")||"[]")
+const container=document.getElementById("cartContainer");
+const cart=JSON.parse(localStorage.getItem("cart")||"[]");
 
 if(cart.length===0){
-container.innerHTML="<p>Your cart is empty.</p>"
-return
+container.innerHTML="<p>Your cart is empty.</p>";
+return;
 }
 
-let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>"
+let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>";
 
-let grandTotal=0
+let grandTotal=0;
 
 cart.forEach(item=>{
-const total=item.unitPrice*item.qty
-grandTotal+=total
+const total=item.unitPrice*item.qty;
+grandTotal+=total;
 
 html+=`
 <tr>
@@ -139,11 +190,10 @@ html+=`
 <td>PHP ${item.unitPrice.toFixed(2)}</td>
 <td>${item.qty}</td>
 <td>PHP ${total.toFixed(2)}</td>
-</tr>
-`
-})
+</tr>`;
+});
 
-html+="</table>"
+html+="</table>";
 
 html+=`
 <p class="totals">Grand Total: PHP ${grandTotal.toFixed(2)}</p>
@@ -153,8 +203,8 @@ html+=`
 <label>Full Name</label>
 <input type="text" id="customerName">
 
-<label>Email (Gmail Only)</label>
-<input type="email" id="customerEmail">
+<label>Email</label>
+<input type="text" id="customerEmail">
 
 <label>Address</label>
 <input type="text" id="customerAddress">
@@ -172,166 +222,68 @@ html+=`
 
 <button onclick="checkout(${grandTotal})">Checkout</button>
 
-<div id="receipt" style="margin-top:30px;"></div>
-`
+<div id="receipt"></div>
+`;
 
-container.innerHTML=html
+container.innerHTML=html;
 }
 
-function checkout(total){
+window.checkout=function(total){
 
-const cart=JSON.parse(localStorage.getItem("cart")||"[]")
-if(cart.length===0){
-alert("Cart is empty.")
-return
+if(!auth.currentUser){
+alert("Please login first.");
+return;
 }
 
-const name=document.getElementById("customerName").value.trim()
-const email=document.getElementById("customerEmail").value.trim().toLowerCase()
-const address=document.getElementById("customerAddress").value.trim()
-const contact=document.getElementById("customerContact").value.trim()
-const payment=document.getElementById("paymentMethod").value
-
-const namePattern=/^[A-Za-z\s]+$/
-const emailPattern=/^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*@gmail\.com$/
-const phonePattern=/^09\d{9}$/
-const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/
-
-if(!namePattern.test(name)){
-alert("Invalid name.")
-return
+if(!auth.currentUser.emailVerified){
+alert("Please verify your email first.");
+return;
 }
 
-if(!emailPattern.test(email)){
-alert("Enter valid Gmail.")
-return
+const name=document.getElementById("customerName").value.trim();
+const email=document.getElementById("customerEmail").value.trim();
+const address=document.getElementById("customerAddress").value.trim();
+const contact=document.getElementById("customerContact").value.trim();
+const payment=document.getElementById("paymentMethod").value;
+
+const phonePattern=/^09\d{9}$/;
+const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/;
+
+if(!phonePattern.test(contact)){
+alert("Invalid PH number.");
+return;
 }
 
 if(!addressPattern.test(address)){
-alert("Address must contain letters AND numbers.")
-return
+alert("Address must contain letters AND numbers.");
+return;
 }
 
-if(!phonePattern.test(contact)){
-alert("Invalid PH number.")
-return
+if(payment===""){
+alert("Select payment method.");
+return;
 }
 
-if(payment==""){
-alert("Select payment method.")
-return
+const orderNumber="FC-"+Date.now();
+
+if(payment==="GCash"){
+window.open("https://www.gcash.com","_blank");
 }
 
-const orderNumber="FC-"+Date.now()
-
-generateReceipt(cart,total,name,email,address,contact,payment,orderNumber)
-
-localStorage.removeItem("cart")
-}
-
-function generateReceipt(cart,total,name,email,address,contact,payment,orderNumber){
-
-const receipt=document.getElementById("receipt")
-
-let html=`
-<div style="border:1px solid #ccc;padding:20px;background:white;">
+document.getElementById("receipt").innerHTML=`
 <h2>Receipt</h2>
+<p>Order #: ${orderNumber}</p>
+<p>Name: ${name}</p>
+<p>Total Paid: PHP ${total.toFixed(2)}</p>
+<p>Thank you ☕</p>
+`;
 
-<p><b>Order #:</b> ${orderNumber}</p>
-<p><b>Name:</b> ${name}</p>
-<p><b>Email:</b> ${email}</p>
-<p><b>Address:</b> ${address}</p>
-<p><b>Contact:</b> ${contact}</p>
-<p><b>Payment:</b> ${payment}</p>
-
-<hr>
-`
-
-cart.forEach(item=>{
-html+=`<p>${item.title} x ${item.qty}
-- PHP ${(item.unitPrice*item.qty).toFixed(2)}</p>`
-})
-
-html+=`
-<hr>
-<h3>Total Paid: PHP ${total.toFixed(2)}</h3>
-<p>Thank you for ordering ☕</p>
-</div>
-`
-
-receipt.innerHTML=html
-}
-
-renderCart()
-
-
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendEmailVerification,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
-  authDomain: "feynmancoffee.firebaseapp.com",
-  projectId: "feynmancoffee",
-  storageBucket: "feynmancoffee.firebasestorage.app",
-  messagingSenderId: "675690093755",
-  appId: "1:675690093755:web:35cd674627b98bd651dd9e",
-  measurementId: "G-4JLJ9G30VV"
+localStorage.removeItem("cart");
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-/* SIGN UP */
-window.signup = async function() {
-
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await sendEmailVerification(userCredential.user);
-
-    alert("Verification link sent! Check Gmail inbox.");
-
-  } catch (error) {
-    alert(error.message);
-  }
-};
-
-/* LOGIN */
-window.login = async function() {
-
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    alert("Logged in!");
-
-  } catch (error) {
-    alert(error.message);
-  }
-};
-
-/* CHECK IF VERIFIED */
-onAuthStateChanged(auth, (user) => {
-
-  if (user) {
-    if (!user.emailVerified) {
-      alert("Please verify your email first.");
-    }
-  }
-
-});
+renderCart();
 
 </script>
+
 </body>
 </html>
