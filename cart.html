@@ -52,7 +52,7 @@ margin-top:20px;
 }
 
 th,td{
-padding:12px 8px;
+padding:12px;
 border:1px solid #ccc;
 text-align:left;
 }
@@ -63,27 +63,16 @@ background:#e2dcd6;
 
 button{
 background:#6f4e37;
-color:#fff;
+color:white;
 border:none;
-padding:6px 12px;
+padding:8px 14px;
 border-radius:4px;
 cursor:pointer;
+margin-top:10px;
 }
 
 button:hover{
 background:#573a2e;
-}
-
-.empty{
-text-align:center;
-margin-top:80px;
-font-size:1.2em;
-}
-
-.totals{
-text-align:right;
-margin-top:20px;
-font-weight:700;
 }
 
 input,select{
@@ -95,22 +84,29 @@ border:1px solid #ccc;
 border-radius:4px;
 }
 
+.empty{
+text-align:center;
+margin-top:80px;
+font-size:1.2em;
+}
+
+.totals{
+text-align:right;
+font-weight:bold;
+margin-top:20px;
+}
+
 </style>
 </head>
 
 <body>
 
 <header>
-<div style="display:flex;align-items:center;gap:10px;">
-<img src="images/Media-removebg-preview.png" width="40">
 <h1>Feynman Coffee</h1>
-</div>
-
 <nav>
 <a href="index.html">Home</a>
 <a href="menu.html">Menu</a>
 <a href="cart.html">Cart</a>
-<a href="index.html#contact">Contact</a>
 </nav>
 </header>
 
@@ -136,7 +132,6 @@ let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th><th></
 let grandTotal=0
 
 cart.forEach((item,index)=>{
-
 const total=item.unitPrice*item.qty
 grandTotal+=total
 
@@ -154,7 +149,6 @@ html+=`
 html+="</table>"
 
 html+=`
-
 <p class="totals">Grand Total: PHP ${grandTotal.toFixed(2)}</p>
 
 <h3>Customer Information</h3>
@@ -172,7 +166,6 @@ html+=`
 <input type="text" id="customerContact">
 
 <h3>Payment Method</h3>
-
 <select id="paymentMethod">
 <option value="">Choose Payment</option>
 <option value="Cash">Cash</option>
@@ -181,24 +174,17 @@ html+=`
 </select>
 
 <button onclick="checkout(${grandTotal})">Checkout</button>
-<button onclick="clearCart()">Clear Cart</button>
 
 <div id="receipt" style="margin-top:30px;"></div>
-
 `
 
 container.innerHTML=html
 }
 
-function removeItem(i){
+function removeItem(index){
 const cart=JSON.parse(localStorage.getItem("cart")||"[]")
-cart.splice(i,1)
+cart.splice(index,1)
 localStorage.setItem("cart",JSON.stringify(cart))
-renderCart()
-}
-
-function clearCart(){
-localStorage.removeItem("cart")
 renderCart()
 }
 
@@ -207,50 +193,52 @@ function checkout(total){
 const cart=JSON.parse(localStorage.getItem("cart")||"[]")
 
 if(cart.length===0){
-alert("Your cart is empty")
+alert("Your cart is empty.")
 return
 }
 
 const name=document.getElementById("customerName").value.trim()
-const email=document.getElementById("customerEmail").value.trim()
+const email=document.getElementById("customerEmail").value.trim().toLowerCase()
 const address=document.getElementById("customerAddress").value.trim()
 const contact=document.getElementById("customerContact").value.trim()
 const payment=document.getElementById("paymentMethod").value
 
+// VALIDATION PATTERNS
 const namePattern=/^[A-Za-z\s]+$/
-const emailPattern=/^[a-zA-Z0-9._%+-]+@gmail\.com$/
+const emailPattern=/^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*@gmail\.com$/
 const phonePattern=/^09\d{9}$/
 
 if(name==""||email==""||address==""||contact==""){
-alert("Please fill in all fields")
+alert("Please fill in all fields.")
 return
 }
 
 if(!namePattern.test(name)){
-alert("Enter valid name (letters only)")
+alert("Invalid name. Letters and spaces only.")
 return
 }
 
 if(!emailPattern.test(email)){
-alert("Enter valid Gmail address")
+alert("Please enter a valid Gmail address (example@gmail.com).")
 return
 }
 
 if(address.length<5){
-alert("Enter valid address")
+alert("Please enter a proper address.")
 return
 }
 
 if(!phonePattern.test(contact)){
-alert("Enter valid PH number (09123456789)")
+alert("Phone number must be valid PH format (09123456789).")
 return
 }
 
 if(payment==""){
-alert("Select payment method")
+alert("Please select a payment method.")
 return
 }
 
+// ORDER DETAILS
 const orderNumber="FC-"+Date.now()
 const verificationCode=Math.floor(1000+Math.random()*9000)
 
@@ -259,9 +247,7 @@ const confirmOrder=confirm(
 "Order #: "+orderNumber+"\n"+
 "Name: "+name+"\n"+
 "Email: "+email+"\n"+
-"Address: "+address+"\n"+
-"Contact: "+contact+"\n"+
-"Payment: "+payment
+"Total: PHP "+total.toFixed(2)
 )
 
 if(!confirmOrder) return
@@ -269,6 +255,7 @@ if(!confirmOrder) return
 generateReceipt(cart,total,name,email,address,contact,payment,orderNumber,verificationCode)
 
 localStorage.removeItem("cart")
+
 }
 
 function generateReceipt(cart,total,name,email,address,contact,payment,orderNumber,verificationCode){
