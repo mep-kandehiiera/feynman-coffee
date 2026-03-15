@@ -74,11 +74,6 @@ border:1px solid #ccc;
 border-radius:4px;
 }
 
-.empty{
-text-align:center;
-margin-top:80px;
-}
-
 .totals{
 text-align:right;
 font-weight:bold;
@@ -111,7 +106,7 @@ const container=document.getElementById("cartContainer")
 const cart=JSON.parse(localStorage.getItem("cart")||"[]")
 
 if(cart.length===0){
-container.innerHTML="<p class='empty'>Your cart is empty.</p>"
+container.innerHTML="<p>Your cart is empty.</p>"
 return
 }
 
@@ -172,7 +167,7 @@ function checkout(total){
 
 const cart=JSON.parse(localStorage.getItem("cart")||"[]")
 if(cart.length===0){
-alert("Your cart is empty.")
+alert("Cart is empty.")
 return
 }
 
@@ -187,18 +182,13 @@ const emailPattern=/^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*@gmail\.com$/
 const phonePattern=/^09\d{9}$/
 const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/
 
-if(name==""||email==""||address==""||contact==""){
-alert("Please fill in all fields.")
-return
-}
-
 if(!namePattern.test(name)){
-alert("Invalid name. Letters only.")
+alert("Invalid name.")
 return
 }
 
 if(!emailPattern.test(email)){
-alert("Please enter a valid Gmail.")
+alert("Enter valid Gmail.")
 return
 }
 
@@ -208,32 +198,32 @@ return
 }
 
 if(!phonePattern.test(contact)){
-alert("Invalid PH phone number.")
+alert("Invalid PH number.")
 return
 }
 
 if(payment==""){
-alert("Please select payment method.")
+alert("Select payment method.")
 return
 }
 
 const orderNumber="FC-"+Date.now()
 
-// ✅ Generate verification code FIRST
+// Generate verification code FIRST
 const verificationCode=Math.floor(1000+Math.random()*9000)
 
-// Show code BEFORE continuing
-alert("Your verification code is: " + verificationCode)
+// Send code to email
+window.location.href=`mailto:${email}?subject=Feynman Coffee Verification Code&body=Your verification code is: ${verificationCode}`
 
-// Ask user to enter it
-const userCode=prompt("Enter the verification code:")
+// Ask user to enter code
+const userCode=prompt("Enter the verification code sent to your email:")
 
 if(userCode!=verificationCode){
 alert("Incorrect verification code.")
 return
 }
 
-// Redirect after verification
+// GCash redirect
 if(payment=="GCash"){
 window.open("https://www.gcash.com","_blank")
 }
@@ -269,7 +259,7 @@ html+=`<p>${item.title} x ${item.qty}
 html+=`
 <hr>
 <h3>Total Paid: PHP ${total.toFixed(2)}</h3>
-<p>Thank you for ordering from Feynman Coffee ☕</p>
+<p>Thank you for ordering ☕</p>
 </div>
 `
 
