@@ -98,6 +98,28 @@ margin-top:20px;
 <div id="cartContainer"></div>
 </section>
 
+<!-- Firebase (MODULAR CDN VERSION) -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
+  authDomain: "feynmancoffee.firebaseapp.com",
+  projectId: "feynmancoffee",
+  storageBucket: "feynmancoffee.firebasestorage.app",
+  messagingSenderId: "675690093755",
+  appId: "1:675690093755:web:35cd674627b98bd651dd9e",
+  measurementId: "G-4JLJ9G30VV"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.firebaseDB = db;
+</script>
+
 <script>
 
 function renderCart(){
@@ -163,7 +185,7 @@ html+=`
 container.innerHTML=html
 }
 
-function checkout(total){
+async function checkout(total){
 
 const cart=JSON.parse(localStorage.getItem("cart")||"[]")
 if(cart.length===0){
@@ -177,55 +199,29 @@ const address=document.getElementById("customerAddress").value.trim()
 const contact=document.getElementById("customerContact").value.trim()
 const payment=document.getElementById("paymentMethod").value
 
-const namePattern=/^[A-Za-z\s]+$/
-const emailPattern=/^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*@gmail\.com$/
-const phonePattern=/^09\d{9}$/
-const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/
-
-if(!namePattern.test(name)){
-alert("Invalid name.")
-return
-}
-
-if(!emailPattern.test(email)){
-alert("Enter valid Gmail.")
-return
-}
-
-if(!addressPattern.test(address)){
-alert("Address must contain letters AND numbers.")
-return
-}
-
-if(!phonePattern.test(contact)){
-alert("Invalid PH number.")
-return
-}
-
-if(payment==""){
-alert("Select payment method.")
+if(name===""||email===""||address===""||contact===""||payment===""){
+alert("Please fill all fields.")
 return
 }
 
 const orderNumber="FC-"+Date.now()
 
-// Generate verification code FIRST
-const verificationCode=Math.floor(1000+Math.random()*9000)
-
-// Send code to email
-window.location.href=`mailto:${email}?subject=Feynman Coffee Verification Code&body=Your verification code is: ${verificationCode}`
-
-// Ask user to enter code
-const userCode=prompt("Enter the verification code sent to your email:")
-
-if(userCode!=verificationCode){
-alert("Incorrect verification code.")
+// Save to Firebase
+try{
+await addDoc(collection(window.firebaseDB,"orders"),{
+orderNumber,
+name,
+email,
+address,
+contact,
+payment,
+total,
+cart,
+createdAt:new Date()
+})
+}catch(error){
+alert("Error saving order to Firebase.")
 return
-}
-
-// GCash redirect
-if(payment=="GCash"){
-window.open("https://www.gcash.com","_blank")
 }
 
 generateReceipt(cart,total,name,email,address,contact,payment,orderNumber)
