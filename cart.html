@@ -22,16 +22,9 @@ justify-content:space-between;
 align-items:center;
 }
 
-nav a{
-color:#fff;
-margin-left:20px;
-text-decoration:none;
-font-weight:500;
-}
-
 section{
 padding:60px 40px;
-max-width:1100px;
+max-width:1000px;
 margin:auto;
 }
 
@@ -42,9 +35,8 @@ margin-top:20px;
 }
 
 th,td{
-padding:12px;
+padding:10px;
 border:1px solid #ccc;
-text-align:left;
 }
 
 th{
@@ -56,8 +48,8 @@ background:#6f4e37;
 color:white;
 border:none;
 padding:8px 14px;
-border-radius:4px;
 cursor:pointer;
+border-radius:4px;
 margin-top:10px;
 }
 
@@ -68,21 +60,13 @@ background:#573a2e;
 input,select{
 width:100%;
 padding:8px;
-margin-top:6px;
+margin-top:5px;
 margin-bottom:12px;
-border:1px solid #ccc;
-border-radius:4px;
 }
 
 .empty{
 text-align:center;
-margin-top:80px;
-}
-
-.totals{
-text-align:right;
-font-weight:bold;
-margin-top:20px;
+margin-top:50px;
 }
 </style>
 </head>
@@ -91,214 +75,155 @@ margin-top:20px;
 
 <header>
 <h1>Feynman Coffee</h1>
-<nav>
-<a href="index.html">Home</a>
-<a href="menu.html">Menu</a>
-<a href="cart.html">Cart</a>
-</nav>
 </header>
 
 <section>
+
 <h2>Your Cart</h2>
 <div id="cartContainer"></div>
+
 </section>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
 <script>
+// 🔥 YOUR FIREBASE CONFIG (replace if needed)
+const firebaseConfig = {
+  apiKey: "PASTE_YOURS",
+  authDomain: "PASTE_YOURS",
+  projectId: "PASTE_YOURS",
+  storageBucket: "PASTE_YOURS",
+  messagingSenderId: "PASTE_YOURS",
+  appId: "PASTE_YOURS"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 function renderCart(){
 
-const container=document.getElementById("cartContainer")
-const cart=JSON.parse(localStorage.getItem("cart")||"[]")
+const container=document.getElementById("cartContainer");
+const cart=JSON.parse(localStorage.getItem("cart")||"[]");
 
 if(cart.length===0){
-container.innerHTML="<p class='empty'>Your cart is empty.</p>"
-return
+container.innerHTML="<p class='empty'>Your cart is empty.</p>";
+return;
 }
 
-let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>"
-
-let grandTotal=0
+let total=0;
+let html="<table><tr><th>Item</th><th>Qty</th><th>Total</th></tr>";
 
 cart.forEach(item=>{
-const total=item.unitPrice*item.qty
-grandTotal+=total
-
-html+=`
-<tr>
+let itemTotal=item.unitPrice*item.qty;
+total+=itemTotal;
+html+=`<tr>
 <td>${item.title}</td>
-<td>PHP ${item.unitPrice.toFixed(2)}</td>
 <td>${item.qty}</td>
-<td>PHP ${total.toFixed(2)}</td>
-</tr>
-`
-})
+<td>PHP ${itemTotal.toFixed(2)}</td>
+</tr>`;
+});
 
-html+="</table>"
+html+="</table>";
 
 html+=`
-<p class="totals">Grand Total: PHP ${grandTotal.toFixed(2)}</p>
+<h3>Total: PHP ${total.toFixed(2)}</h3>
 
-<h3>Customer Information</h3>
+<h3>Customer Info</h3>
 
 <label>Full Name</label>
-<input type="text" id="customerName">
+<input type="text" id="name">
 
-<label>Email (Gmail Only)</label>
-<input type="email" id="customerEmail">
+<label>Gmail</label>
+<input type="email" id="email">
 
 <label>Address</label>
-<input type="text" id="customerAddress">
+<input type="text" id="address">
 
-<label>Contact Number</label>
-<input type="text" id="customerContact">
+<label>Phone (09XXXXXXXXX)</label>
+<input type="text" id="phone">
 
-<h3>Payment Method</h3>
-<select id="paymentMethod">
-<option value="">Choose Payment</option>
+<label>Payment</label>
+<select id="payment">
+<option value="">Select</option>
 <option value="Cash">Cash</option>
 <option value="GCash">GCash</option>
 <option value="Credit Card">Credit Card</option>
 </select>
 
-<button onclick="checkout(${grandTotal})">Checkout</button>
+<button onclick="checkout(${total})">Checkout</button>
 
-<div id="receipt" style="margin-top:30px;"></div>
-`
+<div id="receipt"></div>
+`;
 
-container.innerHTML=html
+container.innerHTML=html;
 }
 
 function checkout(total){
 
-const cart=JSON.parse(localStorage.getItem("cart")||"[]")
-if(cart.length===0){
-alert("Your cart is empty.")
-return
-}
+const cart=JSON.parse(localStorage.getItem("cart")||"[]");
 
-const name=document.getElementById("customerName").value.trim()
-const email=document.getElementById("customerEmail").value.trim().toLowerCase()
-const address=document.getElementById("customerAddress").value.trim()
-const contact=document.getElementById("customerContact").value.trim()
-const payment=document.getElementById("paymentMethod").value
+const name=document.getElementById("name").value.trim();
+const email=document.getElementById("email").value.trim();
+const address=document.getElementById("address").value.trim();
+const phone=document.getElementById("phone").value.trim();
+const payment=document.getElementById("payment").value;
 
-const namePattern=/^[A-Za-z\s]+$/
-const emailPattern=/^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*@gmail\.com$/
-const phonePattern=/^09\d{9}$/
-const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/
-
-if(name==""||email==""||address==""||contact==""){
-alert("Please fill in all fields.")
-return
-}
+const namePattern=/^[A-Za-z\s]+$/;
+const emailPattern=/^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+const phonePattern=/^09\d{9}$/;
+const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+/;
 
 if(!namePattern.test(name)){
-alert("Invalid name. Letters only.")
-return
+alert("Invalid name.");
+return;
 }
 
 if(!emailPattern.test(email)){
-alert("Please enter a valid Gmail.")
-return
+alert("Enter valid Gmail.");
+return;
 }
 
 if(!addressPattern.test(address)){
-alert("Address must contain letters AND numbers.")
-return
+alert("Address must contain letters and numbers.");
+return;
 }
 
-if(!phonePattern.test(contact)){
-alert("Invalid PH phone number.")
-return
+if(!phonePattern.test(phone)){
+alert("Invalid PH number.");
+return;
 }
 
-if(payment==""){
-alert("Please select payment method.")
-return
+if(payment===""){
+alert("Select payment method.");
+return;
 }
 
-const orderNumber="FC-"+Date.now()
-const verificationCode=Math.floor(1000+Math.random()*9000)
+const orderNumber="FC-"+Date.now();
 
-// Simulated email sending
-window.location.href=
-`mailto:${email}?subject=Verification Code&body=Your verification code is: ${verificationCode}`
+db.collection("orders").add({
+orderNumber,
+name,
+email,
+address,
+phone,
+payment,
+total,
+items:cart,
+date:new Date()
+});
 
-const userCode=prompt("Enter the verification code sent to your email:")
+document.getElementById("receipt").innerHTML=`
+<h3>Order Successful 🎉</h3>
+<p>Order #: ${orderNumber}</p>
+<p>Total Paid: PHP ${total.toFixed(2)}</p>
+`;
 
-if(userCode!=verificationCode){
-alert("Incorrect verification code.")
-return
+localStorage.removeItem("cart");
 }
 
-// GCash redirect
-if(payment=="GCash"){
-window.open("https://www.gcash.com","_blank")
-}
-
-generateReceipt(cart,total,name,email,address,contact,payment,orderNumber,verificationCode)
-
-localStorage.removeItem("cart")
-}
-
-function generateReceipt(cart,total,name,email,address,contact,payment,orderNumber,verificationCode){
-
-const receipt=document.getElementById("receipt")
-
-let html=`
-<div style="border:1px solid #ccc;padding:20px;background:white;">
-<h2>Receipt</h2>
-
-<p><b>Order #:</b> ${orderNumber}</p>
-<p><b>Verification Code:</b> ${verificationCode}</p>
-
-<p><b>Name:</b> ${name}</p>
-<p><b>Email:</b> ${email}</p>
-<p><b>Address:</b> ${address}</p>
-<p><b>Contact:</b> ${contact}</p>
-<p><b>Payment:</b> ${payment}</p>
-
-<hr>
-`
-
-cart.forEach(item=>{
-html+=`<p>${item.title} x ${item.qty}
-- PHP ${(item.unitPrice*item.qty).toFixed(2)}</p>`
-})
-
-html+=`
-<hr>
-<h3>Total Paid: PHP ${total.toFixed(2)}</h3>
-<p>Thank you for ordering from Feynman Coffee ☕</p>
-</div>
-`
-
-receipt.innerHTML=html
-}
-
-renderCart()
-
-</script>
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
-  authDomain: "feynmancoffee.firebaseapp.com",
-  projectId: "feynmancoffee",
-  storageBucket: "feynmancoffee.firebasestorage.app",
-  messagingSenderId: "675690093755",
-  appId: "1:675690093755:web:35cd674627b98bd651dd9e",
-  measurementId: "G-4JLJ9G30VV"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-firebase.analytics();
-
-console.log("Firebase connected successfully!");
+renderCart();
 </script>
 
 </body>
