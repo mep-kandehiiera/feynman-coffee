@@ -6,16 +6,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f7f3ef;color:#3b2f2f;}
-header{background:#2b1d1d;color:#fff;padding:20px;display:flex;justify-content:space-between;align-items:center;}
+body{margin:0;font-family:Segoe UI,sans-serif;background:#f7f3ef;color:#3b2f2f;}
+header{background:#2b1d1d;color:white;padding:20px;display:flex;justify-content:space-between;}
 nav a{color:white;margin-left:15px;text-decoration:none;}
 section{padding:40px;max-width:900px;margin:auto;}
 table{width:100%;border-collapse:collapse;margin-top:20px;}
 th,td{border:1px solid #ccc;padding:8px;}
 th{background:#e2dcd6;}
 button{background:#6f4e37;color:white;border:none;padding:10px;border-radius:4px;cursor:pointer;margin-top:10px;}
-button:hover{background:#573a2e;}
-input,select{width:100%;padding:8px;margin:6px 0 12px 0;}
+input,select{width:100%;padding:8px;margin:6px 0 12px;}
 </style>
 </head>
 
@@ -38,19 +37,8 @@ input,select{width:100%;padding:8px;margin:6px 0 12px 0;}
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { 
-getAuth,
-createUserWithEmailAndPassword,
-signInWithEmailAndPassword,
-sendEmailVerification,
-onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-import { 
-getFirestore,
-collection,
-addDoc
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
@@ -81,7 +69,6 @@ let grandTotal=0;
 cart.forEach(item=>{
 const total=item.unitPrice*item.qty;
 grandTotal+=total;
-
 html+=`
 <tr>
 <td>${item.title}</td>
@@ -99,11 +86,9 @@ html+=`
 <h3>Customer Information</h3>
 
 <input type="text" id="customerName" placeholder="Full Name">
-<input type="email" id="customerEmail" placeholder="Email">
-<input type="text" id="customerAddress" placeholder="Address">
-<input type="text" id="customerContact" placeholder="Contact Number">
-
-<h3>Payment Method</h3>
+<input type="email" id="customerEmail" placeholder="Gmail Only">
+<input type="text" id="customerAddress" placeholder="Address (letters AND numbers)">
+<input type="text" id="customerContact" placeholder="09XXXXXXXXX">
 <select id="paymentMethod">
 <option value="">Choose Payment</option>
 <option value="Cash">Cash</option>
@@ -121,29 +106,48 @@ container.innerHTML=html;
 }
 
 window.resendVerification = async function(){
-const user = auth.currentUser;
-if(!user){ alert("Please login first."); return; }
+const user=auth.currentUser;
+if(!user){alert("Login first.");return;}
 await sendEmailVerification(user);
-alert("Verification email sent again.");
+alert("Verification email sent.");
 };
 
 window.checkout = async function(total){
 
 const cart=JSON.parse(localStorage.getItem("cart")||"[]");
-if(cart.length===0){ alert("Cart empty."); return; }
+if(cart.length===0){alert("Cart empty.");return;}
 
-const user = auth.currentUser;
-if(!user){ alert("Please login first."); return; }
-if(!user.emailVerified){ alert("Please verify your email first."); return; }
+const user=auth.currentUser;
+if(!user){alert("Please login first.");return;}
+if(!user.emailVerified){alert("Please verify your email.");return;}
 
 const name=document.getElementById("customerName").value.trim();
-const email=document.getElementById("customerEmail").value.trim();
+const email=document.getElementById("customerEmail").value.trim().toLowerCase();
 const address=document.getElementById("customerAddress").value.trim();
 const contact=document.getElementById("customerContact").value.trim();
 const payment=document.getElementById("paymentMethod").value;
 
+const gmailPattern=/^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*@gmail\.com$/;
+const phonePattern=/^09\d{9}$/;
+const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/;
+
 if(!name||!email||!address||!contact||!payment){
-alert("Please fill all fields.");
+alert("Fill all fields.");
+return;
+}
+
+if(!gmailPattern.test(email)){
+alert("Gmail only.");
+return;
+}
+
+if(!phonePattern.test(contact)){
+alert("Invalid PH number.");
+return;
+}
+
+if(!addressPattern.test(address)){
+alert("Address must contain letters AND numbers.");
 return;
 }
 
