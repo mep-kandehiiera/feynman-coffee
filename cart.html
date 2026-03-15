@@ -279,6 +279,27 @@ receipt.innerHTML=html
 renderCart()
 
 </script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
+  authDomain: "feynmancoffee.firebaseapp.com",
+  projectId: "feynmancoffee",
+  storageBucket: "feynmancoffee.firebasestorage.app",
+  messagingSenderId: "675690093755",
+  appId: "1:675690093755:web:35cd674627b98bd651dd9e",
+  measurementId: "G-4JLJ9G30VV"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+firebase.analytics();
+
+console.log("Firebase connected successfully!");
+</script>
 
 </body>
 </html>
