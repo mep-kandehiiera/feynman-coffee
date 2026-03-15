@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:Segoe UI,sans-serif;background:#f7f3ef;color:#3b2f2f;}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f7f3ef;color:#3b2f2f;}
 header{background:#2b1d1d;color:white;padding:20px;display:flex;justify-content:space-between;}
 nav a{color:white;margin-left:15px;text-decoration:none;}
 section{padding:40px;max-width:900px;margin:auto;}
@@ -37,8 +37,7 @@ input,select{width:100%;padding:8px;margin:6px 0 12px;}
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
@@ -52,9 +51,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 
 function renderCart(){
+
 const container=document.getElementById("cartContainer");
 const cart=JSON.parse(localStorage.getItem("cart")||"[]");
 
@@ -69,6 +68,7 @@ let grandTotal=0;
 cart.forEach(item=>{
 const total=item.unitPrice*item.qty;
 grandTotal+=total;
+
 html+=`
 <tr>
 <td>${item.title}</td>
@@ -89,6 +89,8 @@ html+=`
 <input type="email" id="customerEmail" placeholder="Gmail Only">
 <input type="text" id="customerAddress" placeholder="Address (letters AND numbers)">
 <input type="text" id="customerContact" placeholder="09XXXXXXXXX">
+
+<h3>Payment Method</h3>
 <select id="paymentMethod">
 <option value="">Choose Payment</option>
 <option value="Cash">Cash</option>
@@ -97,7 +99,6 @@ html+=`
 </select>
 
 <button onclick="checkout(${grandTotal})">Checkout</button>
-<button onclick="resendVerification()">Resend Verification Email</button>
 
 <div id="receipt"></div>
 `;
@@ -105,21 +106,7 @@ html+=`
 container.innerHTML=html;
 }
 
-window.resendVerification = async function(){
-const user=auth.currentUser;
-if(!user){alert("Login first.");return;}
-await sendEmailVerification(user);
-alert("Verification email sent.");
-};
-
 window.checkout = async function(total){
-
-const cart=JSON.parse(localStorage.getItem("cart")||"[]");
-if(cart.length===0){alert("Cart empty.");return;}
-
-const user=auth.currentUser;
-if(!user){alert("Please login first.");return;}
-if(!user.emailVerified){alert("Please verify your email.");return;}
 
 const name=document.getElementById("customerName").value.trim();
 const email=document.getElementById("customerEmail").value.trim().toLowerCase();
@@ -127,22 +114,17 @@ const address=document.getElementById("customerAddress").value.trim();
 const contact=document.getElementById("customerContact").value.trim();
 const payment=document.getElementById("paymentMethod").value;
 
-const gmailPattern=/^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*@gmail\.com$/;
+const gmailPattern=/^[a-zA-Z0-9._%+-]+@gmail\.com$/;
 const phonePattern=/^09\d{9}$/;
 const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/;
 
 if(!name||!email||!address||!contact||!payment){
-alert("Fill all fields.");
+alert("Please fill all fields.");
 return;
 }
 
 if(!gmailPattern.test(email)){
-alert("Gmail only.");
-return;
-}
-
-if(!phonePattern.test(contact)){
-alert("Invalid PH number.");
+alert("Invalid Gmail.");
 return;
 }
 
@@ -151,23 +133,30 @@ alert("Address must contain letters AND numbers.");
 return;
 }
 
+if(!phonePattern.test(contact)){
+alert("Invalid PH number.");
+return;
+}
+
+const cart=JSON.parse(localStorage.getItem("cart")||"[]");
+if(cart.length===0){alert("Cart empty.");return;}
+
 const orderNumber="FC-"+Date.now();
+const verificationCode=Math.floor(1000+Math.random()*9000);
+
+// Send verification link (OLD SYSTEM)
+const userCredential = await createUserWithEmailAndPassword(auth, email, orderNumber+"@temp.com").catch(()=>{});
+const user = auth.currentUser;
+
+if(user && !user.emailVerified){
+await sendEmailVerification(user);
+alert("Verification link sent to your email. Please check and verify.");
+return;
+}
 
 if(payment==="GCash"){
 window.open("https://www.gcash.com","_blank");
 }
-
-await addDoc(collection(db,"orders"),{
-orderNumber,
-name,
-email,
-address,
-contact,
-payment,
-total,
-items:cart,
-createdAt:new Date()
-});
 
 document.getElementById("receipt").innerHTML=`
 <h3>Order Successful 🎉</h3>
@@ -176,7 +165,7 @@ document.getElementById("receipt").innerHTML=`
 `;
 
 localStorage.removeItem("cart");
-};
+}
 
 renderCart();
 
