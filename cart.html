@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-
 body{
 margin:0;
 font-family:'Segoe UI', Tahoma, sans-serif;
@@ -23,20 +22,11 @@ justify-content:space-between;
 align-items:center;
 }
 
-header h1{
-margin:0;
-font-size:28px;
-}
-
 nav a{
 color:#fff;
 margin-left:20px;
 text-decoration:none;
 font-weight:500;
-}
-
-nav a:hover{
-color:#6f4e37;
 }
 
 section{
@@ -87,7 +77,6 @@ border-radius:4px;
 .empty{
 text-align:center;
 margin-top:80px;
-font-size:1.2em;
 }
 
 .totals{
@@ -95,7 +84,6 @@ text-align:right;
 font-weight:bold;
 margin-top:20px;
 }
-
 </style>
 </head>
 
@@ -127,11 +115,11 @@ container.innerHTML="<p class='empty'>Your cart is empty.</p>"
 return
 }
 
-let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th><th></th></tr>"
+let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>"
 
 let grandTotal=0
 
-cart.forEach((item,index)=>{
+cart.forEach(item=>{
 const total=item.unitPrice*item.qty
 grandTotal+=total
 
@@ -141,7 +129,6 @@ html+=`
 <td>PHP ${item.unitPrice.toFixed(2)}</td>
 <td>${item.qty}</td>
 <td>PHP ${total.toFixed(2)}</td>
-<td><button onclick="removeItem(${index})">Remove</button></td>
 </tr>
 `
 })
@@ -181,17 +168,9 @@ html+=`
 container.innerHTML=html
 }
 
-function removeItem(index){
-const cart=JSON.parse(localStorage.getItem("cart")||"[]")
-cart.splice(index,1)
-localStorage.setItem("cart",JSON.stringify(cart))
-renderCart()
-}
-
 function checkout(total){
 
 const cart=JSON.parse(localStorage.getItem("cart")||"[]")
-
 if(cart.length===0){
 alert("Your cart is empty.")
 return
@@ -203,10 +182,10 @@ const address=document.getElementById("customerAddress").value.trim()
 const contact=document.getElementById("customerContact").value.trim()
 const payment=document.getElementById("paymentMethod").value
 
-// VALIDATION PATTERNS
 const namePattern=/^[A-Za-z\s]+$/
 const emailPattern=/^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*@gmail\.com$/
 const phonePattern=/^09\d{9}$/
+const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/
 
 if(name==""||email==""||address==""||contact==""){
 alert("Please fill in all fields.")
@@ -214,48 +193,52 @@ return
 }
 
 if(!namePattern.test(name)){
-alert("Invalid name. Letters and spaces only.")
+alert("Invalid name. Letters only.")
 return
 }
 
 if(!emailPattern.test(email)){
-alert("Please enter a valid Gmail address (example@gmail.com).")
+alert("Please enter a valid Gmail.")
 return
 }
 
-if(address.length<5){
-alert("Please enter a proper address.")
+if(!addressPattern.test(address)){
+alert("Address must contain letters AND numbers.")
 return
 }
 
 if(!phonePattern.test(contact)){
-alert("Phone number must be valid PH format (09123456789).")
+alert("Invalid PH phone number.")
 return
 }
 
 if(payment==""){
-alert("Please select a payment method.")
+alert("Please select payment method.")
 return
 }
 
-// ORDER DETAILS
 const orderNumber="FC-"+Date.now()
 const verificationCode=Math.floor(1000+Math.random()*9000)
 
-const confirmOrder=confirm(
-"Confirm Order?\n\n"+
-"Order #: "+orderNumber+"\n"+
-"Name: "+name+"\n"+
-"Email: "+email+"\n"+
-"Total: PHP "+total.toFixed(2)
-)
+// Simulated email sending
+window.location.href=
+`mailto:${email}?subject=Verification Code&body=Your verification code is: ${verificationCode}`
 
-if(!confirmOrder) return
+const userCode=prompt("Enter the verification code sent to your email:")
+
+if(userCode!=verificationCode){
+alert("Incorrect verification code.")
+return
+}
+
+// GCash redirect
+if(payment=="GCash"){
+window.open("https://www.gcash.com","_blank")
+}
 
 generateReceipt(cart,total,name,email,address,contact,payment,orderNumber,verificationCode)
 
 localStorage.removeItem("cart")
-
 }
 
 function generateReceipt(cart,total,name,email,address,contact,payment,orderNumber,verificationCode){
@@ -279,10 +262,8 @@ let html=`
 `
 
 cart.forEach(item=>{
-html+=`
-<p>${item.title} x ${item.qty}
-- PHP ${(item.unitPrice*item.qty).toFixed(2)}</p>
-`
+html+=`<p>${item.title} x ${item.qty}
+- PHP ${(item.unitPrice*item.qty).toFixed(2)}</p>`
 })
 
 html+=`
