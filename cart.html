@@ -108,26 +108,17 @@ margin-top:20px;
 
 </section>
 
-<!-- Firebase -->
+<!-- 🔥 FIREBASE AUTH -->
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { 
-getAuth,
-createUserWithEmailAndPassword,
-signInWithEmailAndPassword,
-sendEmailVerification,
-onAuthStateChanged
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-import {
-getFirestore,
-collection,
-addDoc
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-
-// 🔥 YOUR FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
   authDomain: "feynmancoffee.firebaseapp.com",
@@ -140,50 +131,48 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 
-window.firebaseDB = db;
+window.signup = async function () {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
+  try {
+    const userCredential =
+      await createUserWithEmailAndPassword(auth, email, password);
 
-/* SIGN UP */
-window.signup = async function(){
-const email=document.getElementById("email").value;
-const password=document.getElementById("password").value;
+    await sendEmailVerification(userCredential.user);
 
-try{
-const userCredential = await createUserWithEmailAndPassword(auth,email,password);
-await sendEmailVerification(userCredential.user);
-alert("Verification email sent! Check your inbox.");
-}catch(error){
-alert(error.message);
-}
-}
+    alert("Verification email sent! Check your inbox.");
+  } catch (error) {
+    alert(error.message);
+  }
+};
 
-/* LOGIN */
-window.login = async function(){
-const email=document.getElementById("email").value;
-const password=document.getElementById("password").value;
+window.login = async function () {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-try{
-await signInWithEmailAndPassword(auth,email,password);
-alert("Logged in!");
-}catch(error){
-alert(error.message);
-}
-}
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    alert("Logged in successfully!");
+  } catch (error) {
+    alert(error.message);
+  }
+};
 
-
-/* SHOW AUTH STATUS */
-onAuthStateChanged(auth,(user)=>{
-if(user){
-document.getElementById("status").innerText =
-"Logged in as: "+user.email+
-(user.emailVerified ? " (Verified)" : " (Not Verified)");
-}
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    document.getElementById("status").innerText =
+      "Logged in as: " + user.email +
+      (user.emailVerified ? " (Verified)" : " (Not Verified)");
+  }
 });
 
+</script>
 
-/* CART */
+<!-- CART SYSTEM -->
+<script>
+
 function renderCart(){
 
 const container=document.getElementById("cartContainer")
@@ -220,8 +209,7 @@ html+=`
 container.innerHTML=html
 }
 
-
-window.checkout = async function(total){
+window.checkout = function(total){
 
 const user = auth.currentUser;
 
@@ -235,23 +223,7 @@ alert("Please verify your email before ordering.");
 return;
 }
 
-const cart=JSON.parse(localStorage.getItem("cart")||"[]")
-if(cart.length===0){
-alert("Cart empty.");
-return;
-}
-
-const orderNumber="FC-"+Date.now();
-
-await addDoc(collection(db,"orders"),{
-orderNumber,
-email:user.email,
-total,
-cart,
-createdAt:new Date()
-});
-
-alert("Order successful!");
+alert("Order successful! (You can now connect to Firestore if needed.)");
 
 localStorage.removeItem("cart");
 location.reload();
