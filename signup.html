@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up - Feynman Coffee</title>
+</head>
+
+<body>
+
+<h2>Create Account</h2>
+
+<input type="email" id="email" placeholder="Gmail only">
+<input type="password" id="password" placeholder="Password">
+<button onclick="signup()">Sign Up</button>
+
+<p id="message"></p>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { 
+getAuth,
+createUserWithEmailAndPassword,
+sendEmailVerification
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
+authDomain: "feynmancoffee.firebaseapp.com",
+projectId: "feynmancoffee",
+storageBucket: "feynmancoffee.firebasestorage.app",
+messagingSenderId: "675690093755",
+appId: "1:675690093755:web:35cd674627b98bd651dd9e"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.signup = async function(){
+
+const email = document.getElementById("email").value.trim().toLowerCase();
+const password = document.getElementById("password").value;
+
+const gmailPattern = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+
+if(!gmailPattern.test(email)){
+alert("Use a valid Gmail address.");
+return;
+}
+
+try{
+
+const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+await sendEmailVerification(userCredential.user);
+
+document.getElementById("message").innerText =
+"Verification link sent! Check your email before logging in.";
+
+}catch(error){
+alert(error.message);
+}
+
+};
+
+</script>
+
+</body>
+</html>
