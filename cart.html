@@ -86,6 +86,8 @@ margin-top:20px;
 
 <header>
 <h1>Feynman Coffee</h1>
+
+<!-- ✅ ADDED SIGNUP & LOGIN ONLY -->
 <nav>
 <a href="index.html">Home</a>
 <a href="menu.html">Menu</a>
@@ -93,6 +95,7 @@ margin-top:20px;
 <a href="signup.html">Sign Up</a>
 <a href="login.html">Login</a>
 </nav>
+
 </header>
 
 <section>
@@ -100,49 +103,25 @@ margin-top:20px;
 <div id="cartContainer"></div>
 </section>
 
-<script type="module">
-
-/* ===== FIREBASE ===== */
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-const firebaseConfig = {
-apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
-authDomain: "feynmancoffee.firebaseapp.com",
-projectId: "feynmancoffee",
-storageBucket: "feynmancoffee.firebasestorage.app",
-messagingSenderId: "675690093755",
-appId: "1:675690093755:web:35cd674627b98bd651dd9e"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-let currentUser = null;
-
-onAuthStateChanged(auth,(user)=>{
-currentUser = user;
-});
-
-/* ===== CART DISPLAY ===== */
+<script>
 
 function renderCart(){
 
-const container=document.getElementById("cartContainer");
-const cart=JSON.parse(localStorage.getItem("cart")||"[]");
+const container=document.getElementById("cartContainer")
+const cart=JSON.parse(localStorage.getItem("cart")||"[]")
 
 if(cart.length===0){
-container.innerHTML="<p>Your cart is empty.</p>";
-return;
+container.innerHTML="<p>Your cart is empty.</p>"
+return
 }
 
-let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>";
-let grandTotal=0;
+let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>"
+
+let grandTotal=0
 
 cart.forEach(item=>{
-const total=item.unitPrice*item.qty;
-grandTotal+=total;
+const total=item.unitPrice*item.qty
+grandTotal+=total
 
 html+=`
 <tr>
@@ -150,10 +129,11 @@ html+=`
 <td>PHP ${item.unitPrice.toFixed(2)}</td>
 <td>${item.qty}</td>
 <td>PHP ${total.toFixed(2)}</td>
-</tr>`;
-});
+</tr>
+`
+})
 
-html+="</table>";
+html+="</table>"
 
 html+=`
 <p class="totals">Grand Total: PHP ${grandTotal.toFixed(2)}</p>
@@ -163,10 +143,13 @@ html+=`
 <label>Full Name</label>
 <input type="text" id="customerName">
 
-<label>Address (letters AND numbers)</label>
+<label>Email (Gmail Only)</label>
+<input type="email" id="customerEmail">
+
+<label>Address</label>
 <input type="text" id="customerAddress">
 
-<label>Contact Number (09XXXXXXXXX)</label>
+<label>Contact Number</label>
 <input type="text" id="customerContact">
 
 <h3>Payment Method</h3>
@@ -179,71 +162,97 @@ html+=`
 
 <button onclick="checkout(${grandTotal})">Checkout</button>
 
-<div id="receipt"></div>
-`;
+<div id="receipt" style="margin-top:30px;"></div>
+`
 
-container.innerHTML=html;
+container.innerHTML=html
 }
 
-/* ===== CHECKOUT ===== */
+function checkout(total){
 
-window.checkout=function(total){
-
-if(!currentUser){
-alert("Please login first.");
-return;
+const cart=JSON.parse(localStorage.getItem("cart")||"[]")
+if(cart.length===0){
+alert("Cart is empty.")
+return
 }
 
-if(!currentUser.emailVerified){
-alert("Please verify your email before ordering.");
-return;
-}
+const name=document.getElementById("customerName").value.trim()
+const email=document.getElementById("customerEmail").value.trim().toLowerCase()
+const address=document.getElementById("customerAddress").value.trim()
+const contact=document.getElementById("customerContact").value.trim()
+const payment=document.getElementById("paymentMethod").value
 
-const name=document.getElementById("customerName").value.trim();
-const address=document.getElementById("customerAddress").value.trim();
-const contact=document.getElementById("customerContact").value.trim();
-const payment=document.getElementById("paymentMethod").value;
-
-const namePattern=/^[A-Za-z\s]+$/;
-const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/;
-const phonePattern=/^09\d{9}$/;
+const namePattern=/^[A-Za-z\s]+$/
+const emailPattern=/^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*@gmail\.com$/
+const phonePattern=/^09\d{9}$/
+const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/
 
 if(!namePattern.test(name)){
-alert("Invalid name.");
-return;
+alert("Invalid name.")
+return
+}
+
+if(!emailPattern.test(email)){
+alert("Enter valid Gmail.")
+return
 }
 
 if(!addressPattern.test(address)){
-alert("Address must contain letters AND numbers.");
-return;
+alert("Address must contain letters AND numbers.")
+return
 }
 
 if(!phonePattern.test(contact)){
-alert("Invalid PH number.");
-return;
+alert("Invalid PH number.")
+return
 }
 
-if(payment===""){
-alert("Select a payment method.");
-return;
+if(payment==""){
+alert("Select payment method.")
+return
 }
 
-const orderNumber="FC-"+Date.now();
+const orderNumber="FC-"+Date.now()
 
-if(payment==="GCash"){
-window.open("https://www.gcash.com","_blank");
+generateReceipt(cart,total,name,email,address,contact,payment,orderNumber)
+
+localStorage.removeItem("cart")
 }
 
-document.getElementById("receipt").innerHTML=`
-<h3>Order Successful ✔</h3>
+function generateReceipt(cart,total,name,email,address,contact,payment,orderNumber){
+
+const receipt=document.getElementById("receipt")
+
+let html=`
+<div style="border:1px solid #ccc;padding:20px;background:white;">
+<h2>Receipt</h2>
+
 <p><b>Order #:</b> ${orderNumber}</p>
-<p><b>Total:</b> PHP ${total.toFixed(2)}</p>
-`;
+<p><b>Name:</b> ${name}</p>
+<p><b>Email:</b> ${email}</p>
+<p><b>Address:</b> ${address}</p>
+<p><b>Contact:</b> ${contact}</p>
+<p><b>Payment:</b> ${payment}</p>
 
-localStorage.removeItem("cart");
-};
+<hr>
+`
 
-renderCart();
+cart.forEach(item=>{
+html+=`<p>${item.title} x ${item.qty}
+- PHP ${(item.unitPrice*item.qty).toFixed(2)}</p>`
+})
+
+html+=`
+<hr>
+<h3>Total Paid: PHP ${total.toFixed(2)}</h3>
+<p>Thank you for ordering ☕</p>
+</div>
+`
+
+receipt.innerHTML=html
+}
+
+renderCart()
 
 </script>
 
