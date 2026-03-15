@@ -6,75 +6,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-margin:0;
-font-family:'Segoe UI', Tahoma, sans-serif;
-background:#f7f3ef;
-color:#3b2f2f;
-}
-
-header{
-background:#2b1d1d;
-color:#fff;
-padding:20px 40px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-nav a{
-color:#fff;
-margin-left:20px;
-text-decoration:none;
-font-weight:500;
-}
-
-section{
-padding:60px 40px;
-max-width:1100px;
-margin:auto;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:20px;
-}
-
-th,td{
-padding:12px;
-border:1px solid #ccc;
-text-align:left;
-}
-
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f7f3ef;color:#3b2f2f;}
+header{background:#2b1d1d;color:#fff;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;}
+nav a{color:#fff;margin-left:20px;text-decoration:none;}
+section{padding:40px;max-width:900px;margin:auto;}
+table{width:100%;border-collapse:collapse;margin-top:20px;}
+th,td{padding:10px;border:1px solid #ccc;}
 th{background:#e2dcd6;}
-
-button{
-background:#6f4e37;
-color:white;
-border:none;
-padding:8px 14px;
-border-radius:4px;
-cursor:pointer;
-margin-top:10px;
-}
-
+button{background:#6f4e37;color:white;border:none;padding:10px;border-radius:4px;cursor:pointer;}
 button:hover{background:#573a2e;}
-
-input{
-width:100%;
-padding:8px;
-margin-top:6px;
-margin-bottom:12px;
-border:1px solid #ccc;
-border-radius:4px;
-}
-
-.totals{
-text-align:right;
-font-weight:bold;
-margin-top:20px;
-}
+input,select{width:100%;padding:8px;margin:6px 0 12px 0;}
 </style>
 </head>
 
@@ -90,34 +31,15 @@ margin-top:20px;
 </header>
 
 <section>
-
-<h2>Account</h2>
-
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="password" placeholder="Password">
-
-<button onclick="signup()">Sign Up</button>
-<button onclick="login()">Login</button>
-
-<p id="status"></p>
-
-<hr>
-
 <h2>Your Cart</h2>
 <div id="cartContainer"></div>
-
 </section>
 
-<!-- 🔥 FIREBASE AUTH -->
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendEmailVerification,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
@@ -131,64 +53,23 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-
-window.signup = async function () {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  try {
-    const userCredential =
-      await createUserWithEmailAndPassword(auth, email, password);
-
-    await sendEmailVerification(userCredential.user);
-
-    alert("Verification email sent! Check your inbox.");
-  } catch (error) {
-    alert(error.message);
-  }
-};
-
-window.login = async function () {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    alert("Logged in successfully!");
-  } catch (error) {
-    alert(error.message);
-  }
-};
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    document.getElementById("status").innerText =
-      "Logged in as: " + user.email +
-      (user.emailVerified ? " (Verified)" : " (Not Verified)");
-  }
-});
-
-</script>
-
-<!-- CART SYSTEM -->
-<script>
+const db = getFirestore(app);
 
 function renderCart(){
-
-const container=document.getElementById("cartContainer")
-const cart=JSON.parse(localStorage.getItem("cart")||"[]")
+const container=document.getElementById("cartContainer");
+const cart=JSON.parse(localStorage.getItem("cart")||"[]");
 
 if(cart.length===0){
-container.innerHTML="<p>Your cart is empty.</p>"
-return
+container.innerHTML="<p>Your cart is empty.</p>";
+return;
 }
 
-let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>"
-let grandTotal=0
+let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>";
+let grandTotal=0;
 
 cart.forEach(item=>{
-const total=item.unitPrice*item.qty
-grandTotal+=total
+const total=item.unitPrice*item.qty;
+grandTotal+=total;
 
 html+=`
 <tr>
@@ -196,37 +77,80 @@ html+=`
 <td>PHP ${item.unitPrice.toFixed(2)}</td>
 <td>${item.qty}</td>
 <td>PHP ${total.toFixed(2)}</td>
-</tr>`
-})
+</tr>`;
+});
 
-html+="</table>"
+html+="</table>";
 
 html+=`
-<p class="totals">Grand Total: PHP ${grandTotal.toFixed(2)}</p>
+<p><b>Grand Total: PHP ${grandTotal.toFixed(2)}</b></p>
+
+<h3>Customer Information</h3>
+
+<input type="text" id="customerName" placeholder="Full Name">
+<input type="email" id="customerEmail" placeholder="Email (Gmail)">
+<input type="text" id="customerAddress" placeholder="Address">
+<input type="text" id="customerContact" placeholder="Contact Number">
+
+<h3>Payment Method</h3>
+<select id="paymentMethod">
+<option value="">Choose Payment</option>
+<option value="Cash">Cash</option>
+<option value="GCash">GCash</option>
+<option value="Credit Card">Credit Card</option>
+</select>
+
 <button onclick="checkout(${grandTotal})">Checkout</button>
-`
 
-container.innerHTML=html
+<div id="receipt"></div>
+`;
+
+container.innerHTML=html;
 }
 
-window.checkout = function(total){
+window.checkout = async function(total){
 
-const user = auth.currentUser;
+const cart=JSON.parse(localStorage.getItem("cart")||"[]");
+if(cart.length===0){ alert("Cart empty."); return; }
 
-if(!user){
-alert("Please login first.");
+const name=document.getElementById("customerName").value.trim();
+const email=document.getElementById("customerEmail").value.trim();
+const address=document.getElementById("customerAddress").value.trim();
+const contact=document.getElementById("customerContact").value.trim();
+const payment=document.getElementById("paymentMethod").value;
+
+if(!name||!email||!address||!contact||!payment){
+alert("Please fill all fields.");
 return;
 }
 
-if(!user.emailVerified){
-alert("Please verify your email before ordering.");
-return;
+const orderNumber="FC-"+Date.now();
+
+if(payment==="GCash"){
+window.open("https://www.gcash.com","_blank");
 }
 
-alert("Order successful! (You can now connect to Firestore if needed.)");
+await addDoc(collection(db,"orders"),{
+orderNumber,
+name,
+email,
+address,
+contact,
+payment,
+total,
+items:cart,
+createdAt:new Date()
+});
+
+document.getElementById("receipt").innerHTML=`
+<h3>Order Successful 🎉</h3>
+<p><b>Order #:</b> ${orderNumber}</p>
+<p><b>Name:</b> ${name}</p>
+<p><b>Payment:</b> ${payment}</p>
+<p><b>Total:</b> PHP ${total.toFixed(2)}</p>
+`;
 
 localStorage.removeItem("cart");
-location.reload();
 }
 
 renderCart();
