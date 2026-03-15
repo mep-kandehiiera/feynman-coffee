@@ -41,6 +41,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
   authDomain: "feynmancoffee.firebaseapp.com",
@@ -88,7 +89,7 @@ html+=`
 <h3>Customer Information</h3>
 
 <input type="text" id="customerName" placeholder="Full Name">
-<input type="email" id="customerEmail" placeholder="Email (Gmail)">
+<input type="email" id="customerEmail" placeholder="Email">
 <input type="text" id="customerAddress" placeholder="Address">
 <input type="text" id="customerContact" placeholder="Contact Number">
 
@@ -112,6 +113,17 @@ window.checkout = async function(total){
 
 const cart=JSON.parse(localStorage.getItem("cart")||"[]");
 if(cart.length===0){ alert("Cart empty."); return; }
+
+const user = auth.currentUser;
+if(!user){
+alert("Please login first.");
+return;
+}
+
+if(!user.emailVerified){
+alert("Please verify your email first.");
+return;
+}
 
 const name=document.getElementById("customerName").value.trim();
 const email=document.getElementById("customerEmail").value.trim();
@@ -145,8 +157,6 @@ createdAt:new Date()
 document.getElementById("receipt").innerHTML=`
 <h3>Order Successful 🎉</h3>
 <p><b>Order #:</b> ${orderNumber}</p>
-<p><b>Name:</b> ${name}</p>
-<p><b>Payment:</b> ${payment}</p>
 <p><b>Total:</b> PHP ${total.toFixed(2)}</p>
 `;
 
