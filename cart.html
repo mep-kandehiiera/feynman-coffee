@@ -102,6 +102,8 @@ margin-top:20px;
 
 <script type="module">
 
+/* ===== FIREBASE ===== */
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -119,9 +121,11 @@ const auth = getAuth(app);
 
 let currentUser = null;
 
-onAuthStateChanged(auth, (user)=>{
+onAuthStateChanged(auth,(user)=>{
 currentUser = user;
 });
+
+/* ===== CART DISPLAY ===== */
 
 function renderCart(){
 
@@ -181,6 +185,8 @@ html+=`
 container.innerHTML=html;
 }
 
+/* ===== CHECKOUT ===== */
+
 window.checkout=function(total){
 
 if(!currentUser){
@@ -218,7 +224,7 @@ return;
 }
 
 if(payment===""){
-alert("Select payment method.");
+alert("Select a payment method.");
 return;
 }
 
@@ -229,13 +235,12 @@ window.open("https://www.gcash.com","_blank");
 }
 
 document.getElementById("receipt").innerHTML=`
-<h3>Order Successful</h3>
+<h3>Order Successful ✔</h3>
 <p><b>Order #:</b> ${orderNumber}</p>
 <p><b>Total:</b> PHP ${total.toFixed(2)}</p>
 `;
 
 localStorage.removeItem("cart");
-
 };
 
 renderCart();
