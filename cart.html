@@ -99,6 +99,16 @@ margin-top:20px;
 </header>
 
 <section>
+    <h3>Account</h3>
+
+<label>Email</label>
+<input type="email" id="email">
+
+<label>Password</label>
+<input type="password" id="password">
+
+<button onclick="signup()">Sign Up</button>
+<button onclick="login()">Login</button>
 <h2>Your Cart</h2>
 <div id="cartContainer"></div>
 </section>
@@ -254,7 +264,74 @@ receipt.innerHTML=html
 
 renderCart()
 
-</script>
 
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
+  authDomain: "feynmancoffee.firebaseapp.com",
+  projectId: "feynmancoffee",
+  storageBucket: "feynmancoffee.firebasestorage.app",
+  messagingSenderId: "675690093755",
+  appId: "1:675690093755:web:35cd674627b98bd651dd9e",
+  measurementId: "G-4JLJ9G30VV"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+/* SIGN UP */
+window.signup = async function() {
+
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await sendEmailVerification(userCredential.user);
+
+    alert("Verification link sent! Check Gmail inbox.");
+
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
+/* LOGIN */
+window.login = async function() {
+
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    alert("Logged in!");
+
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
+/* CHECK IF VERIFIED */
+onAuthStateChanged(auth, (user) => {
+
+  if (user) {
+    if (!user.emailVerified) {
+      alert("Please verify your email first.");
+    }
+  }
+
+});
+
+</script>
 </body>
 </html>
