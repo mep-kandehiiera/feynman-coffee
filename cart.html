@@ -22,11 +22,6 @@ justify-content:space-between;
 align-items:center;
 }
 
-header h1{
-margin:0;
-font-size:28px;
-}
-
 nav a{
 color:#fff;
 margin-left:20px;
@@ -47,7 +42,7 @@ margin-top:20px;
 }
 
 th,td{
-padding:12px 8px;
+padding:12px;
 border:1px solid #ccc;
 text-align:left;
 }
@@ -58,27 +53,36 @@ background:#e2dcd6;
 
 button{
 background:#6f4e37;
-color:#fff;
+color:white;
 border:none;
-padding:8px 12px;
+padding:8px 14px;
 border-radius:4px;
 cursor:pointer;
+margin-top:10px;
 }
 
 button:hover{
 background:#573a2e;
 }
 
-.empty{
-text-align:center;
-margin-top:60px;
-font-size:18px;
-}
-
 input,select{
 width:100%;
 padding:8px;
-margin:6px 0 12px 0;
+margin-top:6px;
+margin-bottom:12px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+.empty{
+text-align:center;
+margin-top:80px;
+}
+
+.totals{
+text-align:right;
+font-weight:bold;
+margin-top:20px;
 }
 </style>
 </head>
@@ -103,41 +107,44 @@ margin:6px 0 12px 0;
 
 function renderCart(){
 
-const container=document.getElementById("cartContainer");
-const cart=JSON.parse(localStorage.getItem("cart")||"[]");
+const container=document.getElementById("cartContainer")
+const cart=JSON.parse(localStorage.getItem("cart")||"[]")
 
 if(cart.length===0){
-container.innerHTML="<p class='empty'>Your cart is empty.</p>";
-return;
+container.innerHTML="<p class='empty'>Your cart is empty.</p>"
+return
 }
 
-let total=0;
-let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th><th></th></tr>";
+let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>"
 
-cart.forEach((item,index)=>{
-let itemTotal=item.unitPrice*item.qty;
-total+=itemTotal;
+let grandTotal=0
+
+cart.forEach(item=>{
+const total=item.unitPrice*item.qty
+grandTotal+=total
 
 html+=`
 <tr>
 <td>${item.title}</td>
 <td>PHP ${item.unitPrice.toFixed(2)}</td>
 <td>${item.qty}</td>
-<td>PHP ${itemTotal.toFixed(2)}</td>
-<td><button onclick="removeItem(${index})">Remove</button></td>
+<td>PHP ${total.toFixed(2)}</td>
 </tr>
-`;
-});
+`
+})
 
-html+="</table>";
+html+="</table>"
 
 html+=`
-<h3>Grand Total: PHP ${total.toFixed(2)}</h3>
+<p class="totals">Grand Total: PHP ${grandTotal.toFixed(2)}</p>
 
 <h3>Customer Information</h3>
 
 <label>Full Name</label>
 <input type="text" id="customerName">
+
+<label>Email (Gmail Only)</label>
+<input type="email" id="customerEmail">
 
 <label>Address</label>
 <input type="text" id="customerAddress">
@@ -145,7 +152,7 @@ html+=`
 <label>Contact Number</label>
 <input type="text" id="customerContact">
 
-<label>Payment Method</label>
+<h3>Payment Method</h3>
 <select id="paymentMethod">
 <option value="">Choose Payment</option>
 <option value="Cash">Cash</option>
@@ -153,59 +160,123 @@ html+=`
 <option value="Credit Card">Credit Card</option>
 </select>
 
-<button onclick="checkout(${total})">Checkout</button>
-<button onclick="clearCart()">Clear Cart</button>
+<button onclick="checkout(${grandTotal})">Checkout</button>
 
-<div id="receipt"></div>
-`;
+<div id="receipt" style="margin-top:30px;"></div>
+`
 
-container.innerHTML=html;
-}
-
-function removeItem(index){
-let cart=JSON.parse(localStorage.getItem("cart")||"[]");
-cart.splice(index,1);
-localStorage.setItem("cart",JSON.stringify(cart));
-renderCart();
-}
-
-function clearCart(){
-localStorage.removeItem("cart");
-renderCart();
+container.innerHTML=html
 }
 
 function checkout(total){
 
-const cart=JSON.parse(localStorage.getItem("cart")||"[]");
+const cart=JSON.parse(localStorage.getItem("cart")||"[]")
+if(cart.length===0){
+alert("Your cart is empty.")
+return
+}
 
-const name=document.getElementById("customerName").value.trim();
-const address=document.getElementById("customerAddress").value.trim();
-const contact=document.getElementById("customerContact").value.trim();
-const payment=document.getElementById("paymentMethod").value;
+const name=document.getElementById("customerName").value.trim()
+const email=document.getElementById("customerEmail").value.trim().toLowerCase()
+const address=document.getElementById("customerAddress").value.trim()
+const contact=document.getElementById("customerContact").value.trim()
+const payment=document.getElementById("paymentMethod").value
 
-if(name==""||address==""||contact==""){
-alert("Please fill in all fields.");
-return;
+const namePattern=/^[A-Za-z\s]+$/
+const emailPattern=/^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*@gmail\.com$/
+const phonePattern=/^09\d{9}$/
+const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/
+
+if(name==""||email==""||address==""||contact==""){
+alert("Please fill in all fields.")
+return
+}
+
+if(!namePattern.test(name)){
+alert("Invalid name. Letters only.")
+return
+}
+
+if(!emailPattern.test(email)){
+alert("Please enter a valid Gmail.")
+return
+}
+
+if(!addressPattern.test(address)){
+alert("Address must contain letters AND numbers.")
+return
+}
+
+if(!phonePattern.test(contact)){
+alert("Invalid PH phone number.")
+return
 }
 
 if(payment==""){
-alert("Please select payment method.");
-return;
+alert("Please select payment method.")
+return
 }
 
-const orderNumber="FC-"+Date.now();
+const orderNumber="FC-"+Date.now()
 
-document.getElementById("receipt").innerHTML=`
-<h3>Order Successful 🎉</h3>
+// ✅ Generate verification code FIRST
+const verificationCode=Math.floor(1000+Math.random()*9000)
+
+// Show code BEFORE continuing
+alert("Your verification code is: " + verificationCode)
+
+// Ask user to enter it
+const userCode=prompt("Enter the verification code:")
+
+if(userCode!=verificationCode){
+alert("Incorrect verification code.")
+return
+}
+
+// Redirect after verification
+if(payment=="GCash"){
+window.open("https://www.gcash.com","_blank")
+}
+
+generateReceipt(cart,total,name,email,address,contact,payment,orderNumber)
+
+localStorage.removeItem("cart")
+}
+
+function generateReceipt(cart,total,name,email,address,contact,payment,orderNumber){
+
+const receipt=document.getElementById("receipt")
+
+let html=`
+<div style="border:1px solid #ccc;padding:20px;background:white;">
+<h2>Receipt</h2>
+
 <p><b>Order #:</b> ${orderNumber}</p>
-<p><b>Total Paid:</b> PHP ${total.toFixed(2)}</p>
-<p>Thank you for ordering from Feynman Coffee!</p>
-`;
+<p><b>Name:</b> ${name}</p>
+<p><b>Email:</b> ${email}</p>
+<p><b>Address:</b> ${address}</p>
+<p><b>Contact:</b> ${contact}</p>
+<p><b>Payment:</b> ${payment}</p>
 
-localStorage.removeItem("cart");
+<hr>
+`
+
+cart.forEach(item=>{
+html+=`<p>${item.title} x ${item.qty}
+- PHP ${(item.unitPrice*item.qty).toFixed(2)}</p>`
+})
+
+html+=`
+<hr>
+<h3>Total Paid: PHP ${total.toFixed(2)}</h3>
+<p>Thank you for ordering from Feynman Coffee ☕</p>
+</div>
+`
+
+receipt.innerHTML=html
 }
 
-renderCart();
+renderCart()
 
 </script>
 
