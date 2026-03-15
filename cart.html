@@ -101,7 +101,6 @@ border-radius:4px;
 <body>
 
 <header>
-
 <div style="display:flex;align-items:center;gap:10px;">
 <img src="images/Media-removebg-preview.png" width="40">
 <h1>Feynman Coffee</h1>
@@ -113,15 +112,11 @@ border-radius:4px;
 <a href="cart.html">Cart</a>
 <a href="index.html#contact">Contact</a>
 </nav>
-
 </header>
 
 <section>
-
 <h2>Your Cart</h2>
-
 <div id="cartContainer"></div>
-
 </section>
 
 <script>
@@ -184,7 +179,6 @@ html+=`
 </select>
 
 <button class="clearBtn" onclick="checkout(${grandTotal})">Checkout</button>
-
 <button class="clearBtn" onclick="clearCart()">Clear Cart</button>
 
 <div id="receipt" style="margin-top:30px;"></div>
@@ -198,11 +192,8 @@ container.innerHTML=html
 function removeItem(i){
 
 const cart=JSON.parse(localStorage.getItem("cart")||"[]")
-
 cart.splice(i,1)
-
 localStorage.setItem("cart",JSON.stringify(cart))
-
 renderCart()
 
 }
@@ -210,7 +201,6 @@ renderCart()
 function clearCart(){
 
 localStorage.removeItem("cart")
-
 renderCart()
 
 }
@@ -230,7 +220,6 @@ return
 }
 
 const phonePattern=/^09\d{9}$/
-
 if(!phonePattern.test(contact)){
 alert("Enter valid PH phone number (09123456789)")
 return
@@ -241,8 +230,12 @@ alert("Select payment method")
 return
 }
 
+const orderNumber="FC-"+Date.now()
+const verificationCode=Math.floor(1000+Math.random()*9000)
+
 const confirmOrder=confirm(
 "Confirm order?\n\n"+
+"Order #: "+orderNumber+"\n"+
 "Name: "+name+"\n"+
 "Address: "+address+"\n"+
 "Contact: "+contact+"\n"+
@@ -253,19 +246,22 @@ if(!confirmOrder){
 return
 }
 
-generateReceipt(cart,total,name,address,contact,payment)
+generateReceipt(cart,total,name,address,contact,payment,orderNumber,verificationCode)
 
 localStorage.removeItem("cart")
 
 }
 
-function generateReceipt(cart,total,name,address,contact,payment){
+function generateReceipt(cart,total,name,address,contact,payment,orderNumber,verificationCode){
 
 const receipt=document.getElementById("receipt")
 
 let html=`
 <div style="border:1px solid #ccc;padding:20px;background:white;">
 <h2>Receipt</h2>
+
+<p><b>Order #:</b> ${orderNumber}</p>
+<p><b>Verification Code:</b> ${verificationCode}</p>
 
 <p><b>Name:</b> ${name}</p>
 <p><b>Address:</b> ${address}</p>
@@ -276,18 +272,16 @@ let html=`
 `
 
 cart.forEach(item=>{
-
 html+=`
 <p>${item.title} x ${item.qty}
 - PHP ${(item.unitPrice*item.qty).toFixed(2)}</p>
 `
-
 })
 
 html+=`
 <hr>
 <h3>Total Paid: PHP ${total.toFixed(2)}</h3>
-<p>Thank you for ordering from Feynman Coffee!</p>
+<p>Thank you for ordering from Feynman Coffee! ☕</p>
 </div>
 `
 
