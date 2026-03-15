@@ -1,72 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<title>Feynman Coffee - Cart</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Feynman Coffee</title>
+
+<style>
+body{
+margin:0;
+font-family:'Segoe UI', Tahoma, sans-serif;
+background:#f7f3ef;
+color:#3b2f2f;
+}
+
+header{
+background:#2b1d1d;
+color:#fff;
+padding:20px 40px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+nav a{
+color:#fff;
+margin-left:20px;
+text-decoration:none;
+font-weight:500;
+}
+
+section{
+padding:60px 40px;
+max-width:1100px;
+margin:auto;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th,td{
+padding:12px;
+border:1px solid #ccc;
+text-align:left;
+}
+
+th{
+background:#e2dcd6;
+}
+
+button{
+background:#6f4e37;
+color:white;
+border:none;
+padding:8px 14px;
+border-radius:4px;
+cursor:pointer;
+margin-top:10px;
+}
+
+button:hover{
+background:#573a2e;
+}
+
+input,select{
+width:100%;
+padding:8px;
+margin-top:6px;
+margin-bottom:12px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+.totals{
+text-align:right;
+font-weight:bold;
+margin-top:20px;
+}
+</style>
 </head>
 
 <body>
 
-<h2>Sign Up</h2>
-<input type="email" id="signupEmail" placeholder="Gmail only">
-<input type="password" id="signupPassword" placeholder="Password">
-<button onclick="signup()">Sign Up</button>
+<header>
+<h1>Feynman Coffee</h1>
+<nav>
+<a href="index.html">Home</a>
+<a href="menu.html">Menu</a>
+<a href="cart.html">Cart</a>
+<a href="signup.html">Sign Up</a>
+<a href="login.html">Login</a>
+</nav>
+</header>
 
-<h2>Login</h2>
-<input type="email" id="loginEmail" placeholder="Email">
-<input type="password" id="loginPassword" placeholder="Password">
-<button onclick="login()">Login</button>
-
-<hr>
-
-<h2>Checkout</h2>
-
-<div id="checkoutSection">
-
-<label>Full Name</label>
-<input type="text" id="customerName">
-
-<label>Address (must contain letters AND numbers)</label>
-<input type="text" id="customerAddress">
-
-<label>PH Phone Number (09XXXXXXXXX)</label>
-<input type="text" id="customerPhone">
-
-<label>Payment Method</label>
-<select id="paymentMethod">
-<option value="">Select Payment</option>
-<option value="Cash">Cash</option>
-<option value="GCash">GCash</option>
-<option value="Credit Card">Credit Card</option>
-</select>
-
-<button onclick="checkout()">Place Order</button>
-
-</div>
-
-<p id="status"></p>
+<section>
+<h2>Your Cart</h2>
+<div id="cartContainer"></div>
+</section>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { 
-getAuth,
-createUserWithEmailAndPassword,
-signInWithEmailAndPassword,
-sendEmailVerification,
-onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
-  authDomain: "feynmancoffee.firebaseapp.com",
-  projectId: "feynmancoffee",
-  storageBucket: "feynmancoffee.firebasestorage.app",
-  messagingSenderId: "675690093755",
-  appId: "1:675690093755:web:35cd674627b98bd651dd9e",
-  measurementId: "G-4JLJ9G30VV"
+apiKey: "AIzaSyBBBLe-4DXODWFrzbs7NJdqBLL9JFCZsfc",
+authDomain: "feynmancoffee.firebaseapp.com",
+projectId: "feynmancoffee",
+storageBucket: "feynmancoffee.firebasestorage.app",
+messagingSenderId: "675690093755",
+appId: "1:675690093755:web:35cd674627b98bd651dd9e"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -74,71 +119,72 @@ const auth = getAuth(app);
 
 let currentUser = null;
 
-/* ================= SIGN UP ================= */
+onAuthStateChanged(auth, (user)=>{
+currentUser = user;
+});
 
-window.signup = async function() {
+function renderCart(){
 
-const email = document.getElementById("signupEmail").value.trim().toLowerCase();
-const password = document.getElementById("signupPassword").value;
+const container=document.getElementById("cartContainer");
+const cart=JSON.parse(localStorage.getItem("cart")||"[]");
 
-const gmailPattern = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-
-if(!gmailPattern.test(email)){
-alert("Use a valid Gmail address.");
+if(cart.length===0){
+container.innerHTML="<p>Your cart is empty.</p>";
 return;
 }
 
-try {
-const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-await sendEmailVerification(userCredential.user);
+let html="<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>";
+let grandTotal=0;
 
-alert("Verification link sent! Check your email.");
-} catch(error){
-alert(error.message);
-}
+cart.forEach(item=>{
+const total=item.unitPrice*item.qty;
+grandTotal+=total;
 
-};
-
-/* ================= LOGIN ================= */
-
-window.login = async function() {
-
-const email = document.getElementById("loginEmail").value;
-const password = document.getElementById("loginPassword").value;
-
-try {
-await signInWithEmailAndPassword(auth, email, password);
-alert("Logged in!");
-} catch(error){
-alert(error.message);
-}
-
-};
-
-/* ================= CHECK AUTH ================= */
-
-onAuthStateChanged(auth, (user) => {
-
-if(user){
-currentUser = user;
-
-if(user.emailVerified){
-document.getElementById("status").innerText = "Email Verified ✔ You can checkout.";
-} else {
-document.getElementById("status").innerText = "Please verify your email first.";
-}
-} else {
-currentUser = null;
-}
-
+html+=`
+<tr>
+<td>${item.title}</td>
+<td>PHP ${item.unitPrice.toFixed(2)}</td>
+<td>${item.qty}</td>
+<td>PHP ${total.toFixed(2)}</td>
+</tr>`;
 });
 
-/* ================= CHECKOUT ================= */
+html+="</table>";
 
-window.checkout = function(){
+html+=`
+<p class="totals">Grand Total: PHP ${grandTotal.toFixed(2)}</p>
+
+<h3>Customer Information</h3>
+
+<label>Full Name</label>
+<input type="text" id="customerName">
+
+<label>Address (letters AND numbers)</label>
+<input type="text" id="customerAddress">
+
+<label>Contact Number (09XXXXXXXXX)</label>
+<input type="text" id="customerContact">
+
+<h3>Payment Method</h3>
+<select id="paymentMethod">
+<option value="">Choose Payment</option>
+<option value="Cash">Cash</option>
+<option value="GCash">GCash</option>
+<option value="Credit Card">Credit Card</option>
+</select>
+
+<button onclick="checkout(${grandTotal})">Checkout</button>
+
+<div id="receipt"></div>
+`;
+
+container.innerHTML=html;
+}
+
+window.checkout=function(total){
 
 if(!currentUser){
-alert("You must login first.");
+alert("Please login first.");
 return;
 }
 
@@ -147,14 +193,14 @@ alert("Please verify your email before ordering.");
 return;
 }
 
-const name = document.getElementById("customerName").value.trim();
-const address = document.getElementById("customerAddress").value.trim();
-const phone = document.getElementById("customerPhone").value.trim();
-const payment = document.getElementById("paymentMethod").value;
+const name=document.getElementById("customerName").value.trim();
+const address=document.getElementById("customerAddress").value.trim();
+const contact=document.getElementById("customerContact").value.trim();
+const payment=document.getElementById("paymentMethod").value;
 
-const namePattern = /^[A-Za-z\s]+$/;
-const addressPattern = /^(?=.*[A-Za-z])(?=.*\d).+$/;
-const phonePattern = /^09\d{9}$/;
+const namePattern=/^[A-Za-z\s]+$/;
+const addressPattern=/^(?=.*[A-Za-z])(?=.*\d).+$/;
+const phonePattern=/^09\d{9}$/;
 
 if(!namePattern.test(name)){
 alert("Invalid name.");
@@ -166,25 +212,33 @@ alert("Address must contain letters AND numbers.");
 return;
 }
 
-if(!phonePattern.test(phone)){
+if(!phonePattern.test(contact)){
 alert("Invalid PH number.");
 return;
 }
 
-if(payment === ""){
-alert("Select a payment method.");
+if(payment===""){
+alert("Select payment method.");
 return;
 }
 
-const orderNumber = "FC-" + Date.now();
+const orderNumber="FC-"+Date.now();
 
-alert("Order Placed!\nOrder #: " + orderNumber);
-
-if(payment === "GCash"){
-window.open("https://www.gcash.com", "_blank");
+if(payment==="GCash"){
+window.open("https://www.gcash.com","_blank");
 }
 
+document.getElementById("receipt").innerHTML=`
+<h3>Order Successful</h3>
+<p><b>Order #:</b> ${orderNumber}</p>
+<p><b>Total:</b> PHP ${total.toFixed(2)}</p>
+`;
+
+localStorage.removeItem("cart");
+
 };
+
+renderCart();
 
 </script>
 
